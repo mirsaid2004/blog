@@ -1,0 +1,91 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useEffect } from "react";
+import { Link } from "@/i18n/routing";
+import { motion } from "framer-motion";
+import { Home, RefreshCw, AlertTriangle } from "lucide-react";
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  const t = useTranslations("Error");
+
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-dot-pattern px-6">
+      {/* Background Elements */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-500/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 text-center">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="relative inline-block"
+        >
+          <h1 className="text-[150px] md:text-[200px] font-black leading-none text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-transparent opacity-80 select-none">
+            {t("title")}
+          </h1>
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500"
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <AlertTriangle size={60} className="opacity-50" />
+          </motion.div>
+        </motion.div>
+
+        <motion.h2
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-3xl md:text-5xl font-bold text-foreground mb-4"
+        >
+          {t("subtitle")}
+        </motion.h2>
+
+        <motion.p
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-muted-foreground text-lg mb-8 max-w-md mx-auto"
+        >
+          {t("description")}
+        </motion.p>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-col sm:flex-row gap-4 justify-center"
+        >
+          <button
+            onClick={reset}
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-bold text-sm uppercase tracking-wider shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300"
+          >
+            <RefreshCw size={18} />
+            {t("retry")}
+          </button>
+
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-secondary text-secondary-foreground font-bold text-sm uppercase tracking-wider shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+          >
+            <Home size={18} />
+            {t("backHome")}
+          </Link>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
