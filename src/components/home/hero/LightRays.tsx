@@ -35,10 +35,10 @@ const hexToRgb = (hex: string): [number, number, number] => {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return m
     ? [
-        parseInt(m[1], 16) / 255,
-        parseInt(m[2], 16) / 255,
-        parseInt(m[3], 16) / 255,
-      ]
+      parseInt(m[1], 16) / 255,
+      parseInt(m[2], 16) / 255,
+      parseInt(m[3], 16) / 255,
+    ]
     : [1, 1, 1];
 };
 
@@ -112,32 +112,39 @@ const LightRays: React.FC<LightRaysProps> = ({
   const animationIdRef = useRef<number | null>(null);
   const meshRef = useRef<Mesh | null>(null);
   const cleanupFunctionRef = useRef<(() => void) | null>(null);
+  const [isIntersecting, setIsIntersecting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
+  // 1. Just track if we are intersecting
   useEffect(() => {
     if (!containerRef.current) return;
-
     observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        setIsVisible(entry.isIntersecting);
-      },
+      (entries) => setIsIntersecting(entries[0].isIntersecting),
       { threshold: 0.1 }
     );
-
     observerRef.current.observe(containerRef.current);
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-    };
+    return () => observerRef.current?.disconnect();
   }, []);
 
+  // 2. Safely react to isIntersecting changes without stale closures
   useEffect(() => {
-    if (!isVisible || !containerRef.current) return;
+    let timeoutId: NodeJS.Timeout;
+
+    if (isIntersecting) {
+      setIsMounted(true); // Loop will intrinsically fire setIsVisible(true) when ready
+    } else {
+      setIsVisible(false); // Trigger CSS fade out
+      // Wait for 500ms CSS fade to complete, then unmount WebGL context
+      timeoutId = setTimeout(() => setIsMounted(false), 500);
+    }
+
+    return () => clearTimeout(timeoutId);
+  }, [isIntersecting]);
+
+  useEffect(() => {
+    if (!isMounted || !containerRef.current) return;
 
     if (cleanupFunctionRef.current) {
       cleanupFunctionRef.current();
@@ -317,6 +324,8 @@ void main() {
         uniforms.rayDir.value = dir;
       };
 
+      let hasRenderedFirstFrame = false;
+
       const loop = (t: number) => {
         if (!rendererRef.current || !uniformsRef.current || !meshRef.current) {
           return;
@@ -342,6 +351,17 @@ void main() {
 
         try {
           renderer.render({ scene: mesh });
+          if (!hasRenderedFirstFrame) {
+            hasRenderedFirstFrame = true;
+            // The canvas is now fully painted with WebGL pixels, safe to fade in!
+            // We use functional state update to bypass stale closures
+            setIsVisible(prev => {
+              if (!prev) return true;
+              return prev;
+            });
+          }
+
+          // Only continue loop if we're still mounted
           animationIdRef.current = requestAnimationFrame(loop);
         } catch (error) {
           console.warn("WebGL rendering error:", error);
@@ -393,7 +413,7 @@ void main() {
       }
     };
   }, [
-    isVisible,
+    isMounted,
     raysOrigin,
     raysColor,
     raysSpeed,
@@ -463,7 +483,7 @@ void main() {
   return (
     <div
       ref={containerRef}
-      className={`w-full h-full pointer-events-none z-[3] overflow-hidden ${className}`.trim()}
+      className={`w-full h-full pointer-events-none z-[3] overflow-hidden transition-opacity duration-500 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0'} ${className}`.trim()}
     />
   );
 };

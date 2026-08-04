@@ -15,11 +15,11 @@ const navItems: Array<{
   name: "home" | "articles" | "posts" | "serieses";
   href: string;
 }> = [
-  { name: "home", href: "/" },
-  { name: "articles", href: "/articles" },
-  { name: "posts", href: "/posts" },
-  { name: "serieses", href: "/serieses" },
-];
+    { name: "home", href: "/" },
+    { name: "articles", href: "/articles" },
+    { name: "posts", href: "/posts" },
+    { name: "serieses", href: "/serieses" },
+  ];
 
 export function Navbar() {
   const { resolvedTheme } = useTheme();
@@ -66,11 +66,10 @@ export function Navbar() {
   return (
     <>
       <motion.header
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl rounded-full border transition-all duration-500 ease-out ${
-          scrolled
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl rounded-full border transition-all duration-500 ease-out ${scrolled
             ? "backdrop-blur-xl border-white/20 shadow-xl py-3 px-6"
             : "bg-white/5 dark:bg-black/5 backdrop-blur-sm border-white/10 py-4 px-6"
-        }`}
+          }`}
         initial={{ y: -100, opacity: 0, scale: 0.9 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         transition={{
@@ -400,11 +399,10 @@ function LanguageSwitcher() {
               <button
                 key={l}
                 onClick={() => switchLocale(l)}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-all duration-200 ${
-                  locale === l
+                className={`w-full text-left px-4 py-2.5 text-sm transition-all duration-200 ${locale === l
                     ? "font-bold text-primary bg-primary/10"
                     : "text-foreground hover:bg-primary/5 hover:text-primary"
-                }`}
+                  }`}
               >
                 {l === "en" ? "English" : l === "uz" ? "O'zbek" : "Русский"}
               </button>
