@@ -19,8 +19,9 @@ export default function DefaultHomeView() {
                         <LatestBlogs />
                     </div>
                     <div id="top-picks-container" className="lg:col-span-4 h-full relative z-0">
-                        {/* Placeholder for the sticky sidebar position */}
-                        <div className="sticky h-fit transition-all duration-300" style={{ top: 'var(--top-picks-sticky-top, 400px)' }}>
+                        {/* Sits directly below the docked search card; `top` now only
+                            changes when that card's height changes, not per frame. */}
+                        <div className="sticky h-fit transition-[top] duration-300 ease-out" style={{ top: 'var(--top-picks-sticky-top, 400px)' }}>
                             <TopPicks />
                         </div>
                     </div>

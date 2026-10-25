@@ -1,6 +1,6 @@
 import { Star, Eye, Clock } from "lucide-react";
-import { motion, MotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 interface TopPickItemProps {
     title: string;
@@ -13,19 +13,16 @@ interface TopPickItemProps {
     categories: string[];
     image: string;
     badge?: string;
-    scrollY: MotionValue<number>;
+    isDocked: boolean;
 }
 
-export default function TopPickItem({ title, date, rating, reviews, views, type, readTime, categories, image, badge, scrollY }: TopPickItemProps) {
-    // Animate properties based on scroll applied to the inner content
-    const padding = useTransform(scrollY, [0, 800], ["1rem", "0.75rem"]); // 16px to 12px
-    const titleSize = useTransform(scrollY, [0, 800], ["0.875rem", "0.75rem"]); // text-sm to text-xs
-    const opacity = useTransform(scrollY, [0, 800], [1, 0.9]);
-
+export default function TopPickItem({ title, date, rating, reviews, views, type, readTime, categories, image, badge, isDocked }: TopPickItemProps) {
     return (
-        <motion.div
-            style={{ opacity }}
-            className="flex items-stretch rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-white/40 dark:border-white/10 transition-all duration-300 hover:bg-white/60 dark:hover:bg-slate-900/60 hover:border-white/60 dark:hover:border-white/20 hover:shadow-primary/10 group cursor-pointer overflow-hidden relative h-[100px]"
+        <div
+            className={cn(
+                "flex items-stretch rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-white/40 dark:border-white/10 transition-all duration-300 hover:bg-white/60 dark:hover:bg-slate-900/60 hover:border-white/60 dark:hover:border-white/20 hover:shadow-primary/10 group cursor-pointer overflow-hidden relative h-[100px]",
+                isDocked ? "opacity-90" : "opacity-100"
+            )}
         >
             {/* Left side Image with Overlays */}
             <div className="relative w-36 shrink-0 h-full overflow-hidden">
@@ -66,14 +63,22 @@ export default function TopPickItem({ title, date, rating, reviews, views, type,
             </div>
 
             {/* Right side content with animated padding */}
-            <motion.div style={{ padding }} className="flex-1 flex flex-col justify-center min-w-0 z-10 -ml-2">
+            <div
+                className={cn(
+                    "flex-1 flex flex-col justify-center min-w-0 z-10 -ml-2 transition-[padding] duration-300 ease-out",
+                    isDocked ? "p-3" : "p-4"
+                )}
+            >
                 <div className="flex justify-between items-start mb-1 gap-2">
-                    <motion.h4
-                        style={{ fontSize: titleSize, lineHeight: "1.3" }}
-                        className="font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors"
+                    <h4
+                        style={{ lineHeight: "1.3" }}
+                        className={cn(
+                            "font-bold text-foreground line-clamp-2 group-hover:text-primary transition-all duration-300",
+                            isDocked ? "text-xs" : "text-sm"
+                        )}
                     >
                         {title}
-                    </motion.h4>
+                    </h4>
                     {badge && (
                         <span className="shrink-0 px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-bold rounded-md border border-primary/20 uppercase tracking-tighter">
                             {badge}
@@ -104,7 +109,7 @@ export default function TopPickItem({ title, date, rating, reviews, views, type,
                         <span>{views}</span>
                     </div>
                 </div>
-            </motion.div>
-        </motion.div>
+            </div>
+        </div>
     );
 }

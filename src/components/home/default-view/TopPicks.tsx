@@ -1,7 +1,8 @@
 "use client";
 
 import TopPickItem from "./TopPickItem";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useIsDocked } from "../scroll-dock";
 
 const TOP_PICKS = [
     {
@@ -43,28 +44,30 @@ const TOP_PICKS = [
 ];
 
 export default function TopPicks() {
-    const { scrollY } = useScroll();
-
-    // Instead of padding down, we shrink the title and the gap
-    // Docking point around 800px scroll
-    const titleScale = useTransform(scrollY, [0, 800], [1, 0.75]);
-    const titleOrigin = "left top";
-    const gap = useTransform(scrollY, [0, 800], ["1rem", "0.5rem"]); // 16px to 8px
+    // Densifies once the search card docks above it. A single CSS transition
+    // instead of scroll-linked gap/scale, which relayout on every frame.
+    const isDocked = useIsDocked();
 
     return (
         <div className="w-full">
-            {/* The gap animates, but the container naturally sticks below Search UI */}
-            <motion.div style={{ gap }} className="flex flex-col">
-                <motion.h2
-                    style={{ scale: titleScale, transformOrigin: titleOrigin }}
-                    className="text-2xl font-extrabold text-white tracking-tight mb-3"
+            <div
+                className={cn(
+                    "flex flex-col transition-[gap] duration-300 ease-out",
+                    isDocked ? "gap-2" : "gap-4"
+                )}
+            >
+                <h2
+                    className={cn(
+                        "text-2xl font-extrabold text-white tracking-tight mb-3 origin-top-left transition-transform duration-300 ease-out",
+                        isDocked ? "scale-75" : "scale-100"
+                    )}
                 >
                     Top Picks
-                </motion.h2>
+                </h2>
                 {TOP_PICKS.map((pick) => (
-                    <TopPickItem key={pick.title} {...pick} scrollY={scrollY} />
+                    <TopPickItem key={pick.title} {...pick} isDocked={isDocked} />
                 ))}
-            </motion.div>
+            </div>
         </div>
     );
 }
