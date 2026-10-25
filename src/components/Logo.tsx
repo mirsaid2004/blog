@@ -1,7 +1,8 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { FC, SVGProps, useEffect, useState } from "react";
+import { FC, SVGProps } from "react";
+import { useMounted } from "@/lib/use-mounted";
 
 type LogoProps = {} & SVGProps<SVGSVGElement>;
 
@@ -31,11 +32,7 @@ const LogoBase = ({
 
 const Logo: FC<LogoProps> = ({ ...props }) => {
   const { resolvedTheme } = useTheme();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useMounted();
 
   if (!isMounted) return <LogoBase {...props} fillColor="#1e232e" />;
 

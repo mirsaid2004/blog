@@ -1,3 +1,4 @@
+import { Link } from '@/i18n/routing';
 import SeriesCard from './SeriesCard';
 import { RefreshCw, Gift, Percent, ArrowUpRight, Zap, Target, BookOpen, Layers } from 'lucide-react';
 
@@ -57,12 +58,12 @@ export default function Series() {
                 <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
                     Series
                 </h2>
-                <a
+                <Link
                     href="/series"
                     className="text-primary text-sm font-medium hover:underline underline-offset-4 decoration-primary/50"
                 >
                     View All
-                </a>
+                </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

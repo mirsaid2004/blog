@@ -8,6 +8,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Moon, Sun, Globe, Menu, X } from "lucide-react";
 import Logo from "./Logo";
 import { cn } from "@/lib/utils";
+import { useMounted } from "@/lib/use-mounted";
 import { Locale } from "next-intl";
 import { LANGUAGES_LIST } from "@/constants/langs";
 
@@ -43,9 +44,11 @@ export function Navbar() {
 
   // Close mobile menu when route changes
   const pathname = usePathname();
-  useEffect(() => {
+  const [menuPathname, setMenuPathname] = useState(pathname);
+  if (pathname !== menuPathname) {
+    setMenuPathname(pathname);
     setIsMobileMenuOpen(false);
-  }, [pathname]);
+  }
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -313,10 +316,8 @@ export function Navbar() {
 }
 
 function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const { setTheme, resolvedTheme } = useTheme();
+  const mounted = useMounted();
 
   if (!mounted) return <div className="w-8 h-8" />;
 
@@ -449,10 +450,8 @@ function MobileLanguageSwitcher() {
 }
 
 function MobileThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const { setTheme, resolvedTheme } = useTheme();
+  const mounted = useMounted();
 
   if (!mounted) return null;
 

@@ -112,36 +112,34 @@ const LightRays: React.FC<LightRaysProps> = ({
   const animationIdRef = useRef<number | null>(null);
   const meshRef = useRef<Mesh | null>(null);
   const cleanupFunctionRef = useRef<(() => void) | null>(null);
-  const [isIntersecting, setIsIntersecting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // 1. Just track if we are intersecting
+  // Mount the WebGL context while in view; fade out and unmount when not
   useEffect(() => {
     if (!containerRef.current) return;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     observerRef.current = new IntersectionObserver(
-      (entries) => setIsIntersecting(entries[0].isIntersecting),
+      (entries) => {
+        clearTimeout(timeoutId);
+        if (entries[0].isIntersecting) {
+          setIsMounted(true); // Loop will intrinsically fire setIsVisible(true) when ready
+        } else {
+          setIsVisible(false); // Trigger CSS fade out
+          // Wait for 500ms CSS fade to complete, then unmount WebGL context
+          timeoutId = setTimeout(() => setIsMounted(false), 500);
+        }
+      },
       { threshold: 0.1 }
     );
     observerRef.current.observe(containerRef.current);
-    return () => observerRef.current?.disconnect();
+    return () => {
+      clearTimeout(timeoutId);
+      observerRef.current?.disconnect();
+    };
   }, []);
-
-  // 2. Safely react to isIntersecting changes without stale closures
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    if (isIntersecting) {
-      setIsMounted(true); // Loop will intrinsically fire setIsVisible(true) when ready
-    } else {
-      setIsVisible(false); // Trigger CSS fade out
-      // Wait for 500ms CSS fade to complete, then unmount WebGL context
-      timeoutId = setTimeout(() => setIsMounted(false), 500);
-    }
-
-    return () => clearTimeout(timeoutId);
-  }, [isIntersecting]);
 
   useEffect(() => {
     if (!isMounted || !containerRef.current) return;
