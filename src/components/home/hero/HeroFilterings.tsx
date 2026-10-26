@@ -186,7 +186,7 @@ function HeroFilterings() {
                             className="w-full px-2"
                         >
                             <Tabs defaultValue="articles" className="w-full">
-                                <TabsList className="w-full grid grid-cols-3 h-12 bg-background/50 dark:bg-black/20 backdrop-blur-md border border-border/50 rounded-full p-1 gap-1">
+                                <TabsList className="w-full grid grid-cols-3 h-12 bg-background/50 dark:bg-black/20 border border-border/50 rounded-full p-1 gap-1">
                                     <TabsTrigger value="articles" className="rounded-full text-sm font-semibold h-full data-[state=active]:bg-background data-[state=active]:shadow-sm">Articles</TabsTrigger>
                                     <TabsTrigger value="posts" className="rounded-full text-sm font-semibold h-full data-[state=active]:bg-background data-[state=active]:shadow-sm">Posts</TabsTrigger>
                                     <TabsTrigger value="series" className="rounded-full text-sm font-semibold h-full data-[state=active]:bg-background data-[state=active]:shadow-sm">Series</TabsTrigger>

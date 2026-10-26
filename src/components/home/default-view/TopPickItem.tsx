@@ -20,7 +20,7 @@ export default function TopPickItem({ title, date, rating, reviews, views, type,
     return (
         <div
             className={cn(
-                "flex items-stretch rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-white/40 dark:border-white/10 transition-all duration-300 hover:bg-white/60 dark:hover:bg-slate-900/60 hover:border-white/60 dark:hover:border-white/20 hover:shadow-primary/10 group cursor-pointer overflow-hidden relative h-[100px]",
+                "flex items-stretch rounded-2xl bg-white/70 dark:bg-slate-900/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-white/40 dark:border-white/10 transition-all duration-300 hover:bg-white/80 dark:hover:bg-slate-900/80 hover:border-white/60 dark:hover:border-white/20 hover:shadow-primary/10 group cursor-pointer overflow-hidden relative h-[100px]",
                 isDocked ? "opacity-90" : "opacity-100"
             )}
         >
@@ -43,13 +43,13 @@ export default function TopPickItem({ title, date, rating, reviews, views, type,
 
                 {/* Overlaid Badges */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-                    <span className="px-1.5 py-0.5 bg-background/80 backdrop-blur-md rounded lg:rounded-md text-[8px] font-bold text-primary uppercase tracking-widest border border-border w-fit">
+                    <span className="px-1.5 py-0.5 bg-background/90 rounded lg:rounded-md text-[8px] font-bold text-primary uppercase tracking-widest border border-border w-fit">
                         {type}
                     </span>
                 </div>
 
                 <div className="absolute top-2 right-2 z-10">
-                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-md rounded lg:rounded-md text-[8px] font-bold text-white border border-white/10">
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-black/70 rounded lg:rounded-md text-[8px] font-bold text-white border border-white/10">
                         <Clock className="w-2.5 h-2.5 text-primary" />
                         <span>{readTime}</span>
                     </div>

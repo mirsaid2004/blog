@@ -19,7 +19,7 @@ export default function SeriesCard({ title, description, date, parts, categories
     const displayImages = images.slice(0, 4);
 
     const content = (
-        <div className="group flex flex-row items-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-white/40 dark:border-white/10 rounded-2xl p-4 gap-4 cursor-pointer hover:bg-white/60 dark:hover:bg-slate-900/60 hover:border-white/60 dark:hover:border-white/20 hover:shadow-primary/10 transition-all duration-300 w-full h-full">
+        <div className="group flex flex-row items-center bg-white/70 dark:bg-slate-900/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-white/40 dark:border-white/10 rounded-2xl p-4 gap-4 cursor-pointer hover:bg-white/80 dark:hover:bg-slate-900/80 hover:border-white/60 dark:hover:border-white/20 hover:shadow-primary/10 transition-all duration-300 w-full h-full">
 
             {/* Left side: Animated Stacked Images */}
             <div className={style.card_field}>
