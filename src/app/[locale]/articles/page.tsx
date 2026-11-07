@@ -1,126 +1,71 @@
-"use client";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import type { Locale } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import ArchiveHeader from "@/components/archive/ArchiveHeader";
+import ArchiveToolbar from "@/components/archive/ArchiveToolbar";
+import ArticleCard from "@/components/archive/ArticleCard";
+import EmptyState from "@/components/archive/EmptyState";
+import FeaturedArticle from "@/components/archive/FeaturedArticle";
+import { applyFilters, getArticles, hasActiveFilters, parseFilters, tagCounts } from "@/lib/content/queries";
 
-import { useState } from "react";
-import CategoryHero from "@/components/archive/CategoryHero";
-import CategorySearch from "@/components/archive/CategorySearch";
-import BlogCard from "@/components/home/default-view/BlogCard";
+interface PageProps {
+  params: Promise<{ locale: Locale }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
-const CATEGORIES = [
-    "All Insights",
-    "Distributed Systems",
-    "Rust Performance",
-    "Cloud Infrastructure",
-    "WebGPU & Graphics",
-    "Machine Learning",
-];
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Archive.articles" });
+  return { title: t("eyebrow"), description: t("description") };
+}
 
-const ARTICLES = [
-    {
-        title: "Architecting Zero-Cost Abstractions in Systems Languages",
-        description: "How to leverage modern compiler intrinsics to build safer APIs without the runtime overhead...",
-        date: "NOV 24, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "12 MIN",
-        categories: ["SYSTEMS", "ARCHITECTURE"],
-        rating: 4.8,
-        reviews: 74,
-        views: "1.2K",
-        slug: "zero-cost-abstractions",
-    },
-    {
-        title: "Isomorphic Security: Hardening the Full Stack",
-        description: "Implementing unified security policies that transition seamlessly from frontend state to backend database constraints.",
-        date: "OCT 14, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "22 MIN",
-        categories: ["SECURITY", "FULLSTACK"],
-        rating: 4.9,
-        reviews: 120,
-        views: "3.4K",
-        slug: "isomorphic-security",
-    },
-    {
-        title: "The Observability Gap in Distributed Actors",
-        description: "Why conventional logging fails in asynchronous actor systems and how to trace messages across stateful bounds.",
-        date: "SEP 02, 2023",
-        image: "/series-placeholder.svg",
-        type: "ARTICLE",
-        readTime: "8 MIN",
-        categories: ["OBSERVABILITY", "ARCHITECTURE"],
-        rating: 4.7,
-        reviews: 56,
-        views: "900",
-        slug: "observability-gap",
-    },
-    {
-        title: "Understanding CPU Caches & Memory Barriers",
-        description: "A deep dive into L1/L2 caches, cache lines, and how memory barriers prevent instruction reordering bugs.",
-        date: "AUG 15, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "18 MIN",
-        categories: ["HARDWARE", "PERFORMANCE"],
-        rating: 5.0,
-        reviews: 210,
-        views: "5.1K",
-        slug: "cpu-caches",
-    },
-    {
-        title: "Building a Custom Allocator in C++",
-        description: "Step-by-step guide to writing a high-performance memory allocator for video game engines.",
-        date: "JUL 22, 2023",
-        image: "/series-placeholder.svg",
-        type: "ARTICLE",
-        readTime: "30 MIN",
-        categories: ["C++", "MEMORY"],
-        rating: 4.6,
-        reviews: 45,
-        views: "2.2K",
-        slug: "custom-allocator",
-    },
-    {
-        title: "WebAssembly Beyond the Browser",
-        description: "Exploring WASI and how WebAssembly is becoming the universal runtime for cloud-native applications.",
-        date: "JUN 10, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "14 MIN",
-        categories: ["WASM", "CLOUD"],
-        rating: 4.9,
-        reviews: 180,
-        views: "4.8K",
-        slug: "wasm-beyond-browser",
-    }
-];
+export default async function ArticlesPage({ searchParams }: PageProps) {
+  const t = await getTranslations("Archive");
+  const filters = parseFilters(await searchParams);
+  const all = getArticles();
+  const results = applyFilters(all, filters);
 
-export default function ArticlesPage() {
-    const [activeCategory, setActiveCategory] = useState("All Insights");
+  // Feature the newest article only on the unfiltered view, where "newest" is meaningful.
+  const showFeatured = !hasActiveFilters(filters) && results.length > 1;
+  const featured = showFeatured ? results[0] : undefined;
+  const rest = showFeatured ? results.slice(1) : results;
 
-    return (
-        <main className="min-h-screen bg-background dark:bg-[#0B0F19]">
-            <CategoryHero
-                eyebrow="EDITORIAL HUB"
-                titleLeft="Engineering at the"
-                titleRight="Edge of Possibility"
-                description="Curated deep-dives into systems architecture, performance optimization, and the future of web technologies."
-            />
+  return (
+    <main className="relative min-h-screen pb-24 pt-32 md:pt-36">
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.10),transparent_65%)]" />
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+        <ArchiveHeader
+          eyebrow={t("articles.eyebrow")}
+          title={t("articles.title")}
+          description={t("articles.description")}
+          stats={[
+            { label: t("articles.count", { count: all.length }) },
+            {
+              label: t("common.readingTime", {
+                minutes: all.reduce((sum, a) => sum + a.readMinutes, 0),
+              }),
+            },
+          ]}
+        />
 
-            <CategorySearch
-                categories={CATEGORIES}
-                activeCategory={activeCategory}
-                onCategoryChange={setActiveCategory}
-                placeholder="Explore the knowledge graph..."
-            />
+        <Suspense>
+          <ArchiveToolbar tags={tagCounts(all)} resultCount={results.length} />
+        </Suspense>
 
-            <section className="w-full max-w-7xl mx-auto px-4 md:px-6 pb-24">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {ARTICLES.map((article) => (
-                        <BlogCard key={article.slug} {...article} />
-                    ))}
-                </div>
-            </section>
-        </main>
-    );
+        {results.length === 0 ? (
+          <EmptyState resetHref="/articles" />
+        ) : (
+          <>
+            {featured && <FeaturedArticle article={featured} />}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {rest.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </main>
+  );
 }

@@ -13,13 +13,13 @@ import { Locale } from "next-intl";
 import { LANGUAGES_LIST } from "@/constants/langs";
 
 const navItems: Array<{
-  name: "home" | "articles" | "posts" | "serieses";
+  name: "home" | "articles" | "posts" | "series";
   href: string;
 }> = [
     { name: "home", href: "/" },
     { name: "articles", href: "/articles" },
     { name: "posts", href: "/posts" },
-    { name: "serieses", href: "/serieses" },
+    { name: "series", href: "/series" },
   ];
 
 export function Navbar() {
