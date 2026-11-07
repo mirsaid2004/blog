@@ -1,1 +1,38 @@
-{}
+{
+  "Navigation": {
+    "home": "главная",
+    "articles": "статьи",
+    "posts": "посты",
+    "serieses": "серии",
+    "about": "Обо мне",
+    "work": "Работы",
+    "contact": "Контакты"
+  },
+  "Footer": {
+    "brandName": "M_DEV",
+    "brandDescription": "Глубокие погружения в архитектуру ПО, современные веб-технологии и проектирование масштабируемых систем.",
+    "navigationTitle": "Навигация",
+    "resourcesTitle": "Ресурсы",
+    "resources": {
+      "npmPackages": "NPM-пакеты",
+      "github": "GitHub",
+      "blog": "Блог",
+      "resume": "Резюме"
+    },
+    "copyright": "M_DEV. Сделано с",
+    "using": "и Next.js",
+    "scrollToTop": "Наверх"
+  },
+  "Error": {
+    "title": "500",
+    "subtitle": "Что-то пошло не так",
+    "description": "Произошла непредвиденная ошибка. Попробуйте ещё раз или вернитесь на главную.",
+    "retry": "Повторить",
+    "backHome": "На главную"
+  },
+  "NotFound": {
+    "subtitle": "Страница не найдена",
+    "description": "Страница, которую вы ищете, не существует или была перемещена.",
+    "backHome": "На главную"
+  }
+}

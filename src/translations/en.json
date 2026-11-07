@@ -1,1 +1,38 @@
-{}
+{
+  "Navigation": {
+    "home": "home",
+    "articles": "articles",
+    "posts": "posts",
+    "serieses": "serieses",
+    "about": "About",
+    "work": "Work",
+    "contact": "Contact"
+  },
+  "Footer": {
+    "brandName": "M_DEV",
+    "brandDescription": "Deep dives into software architecture, modern web technologies, and scalable systems design.",
+    "navigationTitle": "Navigation",
+    "resourcesTitle": "Resources",
+    "resources": {
+      "npmPackages": "NPM Packages",
+      "github": "GitHub",
+      "blog": "Blog",
+      "resume": "Resume"
+    },
+    "copyright": "M_DEV. Built with",
+    "using": "and Next.js",
+    "scrollToTop": "Scroll to top"
+  },
+  "Error": {
+    "title": "500",
+    "subtitle": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again or head back to the home page.",
+    "retry": "Try again",
+    "backHome": "Back to home"
+  },
+  "NotFound": {
+    "subtitle": "Page not found",
+    "description": "The page you are looking for doesn't exist or has been moved.",
+    "backHome": "Back to home"
+  }
+}

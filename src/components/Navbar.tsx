@@ -24,7 +24,7 @@ const navItems: Array<{
 
 export function Navbar() {
   const { resolvedTheme } = useTheme();
-  const t = useTranslations();
+  const t = useTranslations("Navigation");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [scrolled, setScrolled] = useState(false);
