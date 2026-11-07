@@ -147,7 +147,7 @@ function HeroFilterings() {
     const inputHeight = useTransform(progress, [0, 1], [56, 44]);
 
     const cardBgClass = isDocked
-        ? "bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border-white/40 dark:border-white/10"
+        ? "bg-white/90 dark:bg-slate-900/40 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border-slate-200 dark:border-white/10"
         : "bg-transparent border-transparent shadow-none";
 
     return (

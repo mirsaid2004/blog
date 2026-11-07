@@ -27,7 +27,7 @@ const TOP_PICKS = [
         type: "SERIES",
         readTime: "12 MIN",
         categories: ["REACT", "NEXT.JS"],
-        image: "/api/saga_pattern_blog_preview_1773432699263.png"
+        image: "/series-placeholder.svg"
     },
     {
         title: "The Rust Borrow Checker",
@@ -58,7 +58,7 @@ export default function TopPicks() {
             >
                 <h2
                     className={cn(
-                        "text-2xl font-extrabold text-white tracking-tight mb-3 origin-top-left transition-transform duration-300 ease-out",
+                        "text-2xl font-extrabold text-foreground tracking-tight mb-3 origin-top-left transition-transform duration-300 ease-out",
                         isDocked ? "scale-75" : "scale-100"
                     )}
                 >

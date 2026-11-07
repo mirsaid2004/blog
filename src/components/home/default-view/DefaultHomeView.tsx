@@ -9,8 +9,8 @@ export default function DefaultHomeView() {
             {/* Global Background Elements from 404/Error Pages */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 {/* These gradients will be clipped to the section, but won't break sticky positioning of children */}
-                <div className="absolute top-[20%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px]" />
-                <div className="absolute top-[60%] right-[-5%] w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[120px]" />
+                <div className="absolute top-[20%] left-[-10%] w-[500px] h-[500px] bg-primary/5 dark:bg-primary/20 rounded-full blur-[120px]" />
+                <div className="absolute top-[60%] right-[-5%] w-[400px] h-[400px] bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-[120px]" />
             </div>
 
             <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 py-20 min-h-[200vh]">
