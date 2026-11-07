@@ -24,7 +24,7 @@ const navItems: Array<{
 
 export function Navbar() {
   const { resolvedTheme } = useTheme();
-  const t = useTranslations();
+  const t = useTranslations("Navigation");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -70,7 +70,7 @@ export function Navbar() {
     <>
       <motion.header
         className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl rounded-full border transition-all duration-500 ease-out ${scrolled
-            ? "backdrop-blur-xl border-white/20 shadow-xl py-3 px-6"
+            ? "bg-white/85 dark:bg-transparent backdrop-blur-xl border-slate-200 dark:border-white/20 shadow-xl py-3 px-6"
             : "bg-white/5 dark:bg-black/5 backdrop-blur-sm border-white/10 py-4 px-6"
           }`}
         initial={{ y: -100, opacity: 0, scale: 0.9 }}

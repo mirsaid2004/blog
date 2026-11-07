@@ -25,7 +25,7 @@ function Hero() {
       >
         <h1
           className={
-            "pointer-events-auto text-5xl/normal md:text-7xl/normal font-extrabold mb-2 bg-[linear-gradient(180deg,var(--color-slate-200),var(--color-foreground))] dark:bg-[linear-gradient(180deg,var(--color-white)_45%,var(--color-slate-700))] bg-clip-text text-transparent"
+            "pointer-events-auto text-5xl/normal md:text-7xl/normal font-extrabold mb-2 bg-[linear-gradient(180deg,var(--color-slate-700),var(--color-foreground))] dark:bg-[linear-gradient(180deg,var(--color-white)_45%,var(--color-slate-700))] bg-clip-text text-transparent"
           }
         >
           Engineering Insights
@@ -38,7 +38,7 @@ function Hero() {
         <div aria-hidden style={{ height: "var(--hero-sticky-extent, 0px)" }} />
       </section>
       <ScrollDownIndicator />
-      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 opacity-25 dark:opacity-100">
         <LightRaysAnimation />
       </div>
     </div>

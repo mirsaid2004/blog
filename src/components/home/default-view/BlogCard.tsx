@@ -31,11 +31,12 @@ export default function BlogCard({
 }: BlogCardProps) {
     return (
         <Link href={`/blog/${slug}`} className="group block h-full">
-            <div className="relative h-full flex flex-col bg-white/70 dark:bg-slate-900/70 rounded-4xl border border-white/40 dark:border-white/10 overflow-hidden transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-2xl hover:shadow-primary/20 hover:border-white/60 dark:hover:border-white/20 outline-1 outline-transparent hover:outline-primary/30">
+            <div className="relative h-full flex flex-col bg-white dark:bg-slate-900/70 rounded-4xl border border-slate-200 dark:border-white/10 overflow-hidden transition-all duration-300 shadow-[0_1px_2px_rgb(15_23_42/0.06),0_8px_24px_rgb(15_23_42/0.06)] dark:shadow-none hover:shadow-2xl hover:shadow-primary/20 hover:border-slate-300 dark:hover:border-white/20 outline-1 outline-transparent hover:outline-primary/30">
                 {/* Image Container */}
                 <div className="relative aspect-16/10 w-full overflow-hidden">
                     <Image
                         src={image}
+                        unoptimized={image.endsWith('.svg')}
                         alt={title}
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -61,7 +62,7 @@ export default function BlogCard({
                             {categories.map((cat) => (
                                 <span
                                     key={cat}
-                                    className="px-2 py-0.5 bg-primary/20 rounded-md text-[9px] font-bold uppercase tracking-wider text-primary border border-primary/20"
+                                    className="px-2 py-0.5 bg-white/90 dark:bg-primary/20 rounded-md text-[9px] font-bold uppercase tracking-wider text-primary border border-primary/20"
                                 >
                                     {cat}
                                 </span>

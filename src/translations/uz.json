@@ -1,1 +1,38 @@
-{}
+{
+  "Navigation": {
+    "home": "bosh sahifa",
+    "articles": "maqolalar",
+    "posts": "postlar",
+    "serieses": "seriyalar",
+    "about": "Men haqimda",
+    "work": "Ishlar",
+    "contact": "Aloqa"
+  },
+  "Footer": {
+    "brandName": "M_DEV",
+    "brandDescription": "Dasturiy arxitektura, zamonaviy veb-texnologiyalar va kengayuvchan tizimlar dizayniga chuqur sho'ng'ish.",
+    "navigationTitle": "Navigatsiya",
+    "resourcesTitle": "Resurslar",
+    "resources": {
+      "npmPackages": "NPM paketlari",
+      "github": "GitHub",
+      "blog": "Blog",
+      "resume": "Rezyume"
+    },
+    "copyright": "M_DEV. Yaratilgan:",
+    "using": "va Next.js",
+    "scrollToTop": "Tepaga"
+  },
+  "Error": {
+    "title": "500",
+    "subtitle": "Nimadir xato ketdi",
+    "description": "Kutilmagan xatolik yuz berdi. Qayta urinib ko'ring yoki bosh sahifaga qayting.",
+    "retry": "Qayta urinish",
+    "backHome": "Bosh sahifaga"
+  },
+  "NotFound": {
+    "subtitle": "Sahifa topilmadi",
+    "description": "Siz izlayotgan sahifa mavjud emas yoki ko'chirilgan.",
+    "backHome": "Bosh sahifaga"
+  }
+}

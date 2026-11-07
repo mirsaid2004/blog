@@ -4,7 +4,7 @@ import LightRays from './LightRays';
 
 function LightRaysAnimation() {
 
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   // Light mode settings - subtle elegant rays
   const lightModeSettings = {
@@ -41,7 +41,7 @@ function LightRaysAnimation() {
   };
 
   // Use dark mode settings by default, light mode if explicitly set
-  const settings = theme === "light" ? lightModeSettings : darkModeSettings;
+  const settings = resolvedTheme === "light" ? lightModeSettings : darkModeSettings;
 
   return (
     <LightRays {...settings} />

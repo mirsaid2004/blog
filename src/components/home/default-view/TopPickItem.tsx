@@ -20,7 +20,7 @@ export default function TopPickItem({ title, date, rating, reviews, views, type,
     return (
         <div
             className={cn(
-                "flex items-stretch rounded-2xl bg-white/70 dark:bg-slate-900/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-white/40 dark:border-white/10 transition-all duration-300 hover:bg-white/80 dark:hover:bg-slate-900/80 hover:border-white/60 dark:hover:border-white/20 hover:shadow-primary/10 group cursor-pointer overflow-hidden relative h-[100px]",
+                "flex items-stretch rounded-2xl bg-white dark:bg-slate-900/70 shadow-[0_1px_2px_rgb(15_23_42/0.06),0_8px_24px_rgb(15_23_42/0.06)] dark:shadow-none border border-slate-200 dark:border-white/10 transition-all duration-300 hover:bg-white dark:hover:bg-slate-900/80 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-primary/10 group cursor-pointer overflow-hidden relative h-[100px]",
                 isDocked ? "opacity-90" : "opacity-100"
             )}
         >
@@ -28,6 +28,7 @@ export default function TopPickItem({ title, date, rating, reviews, views, type,
             <div className="relative w-36 shrink-0 h-full overflow-hidden">
                 <Image
                     src={image}
+                    unoptimized={image.endsWith('.svg')}
                     alt={title}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
