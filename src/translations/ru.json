@@ -57,7 +57,15 @@
       "noResultsTitle": "Ничего не найдено",
       "noResultsDescription": "Попробуйте другой запрос или сбросьте фильтры, чтобы увидеть всё.",
       "typeArticle": "Статья",
-      "typePost": "Пост"
+      "typePost": "Пост",
+      "stats": {
+        "articles": "{count, plural, one {статья} few {статьи} many {статей} other {статьи}}",
+        "posts": "{count, plural, one {пост} few {поста} many {постов} other {поста}}",
+        "series": "{count, plural, one {серия} few {серии} many {серий} other {серии}}",
+        "parts": "{count, plural, one {часть} few {части} many {частей} other {части}}",
+        "minutes": "{count, plural, one {минута чтения} few {минуты чтения} many {минут чтения} other {минуты чтения}}",
+        "views": "{count, plural, one {просмотр} few {просмотра} many {просмотров} other {просмотра}}"
+      }
     },
     "articles": {
       "eyebrow": "Статьи",

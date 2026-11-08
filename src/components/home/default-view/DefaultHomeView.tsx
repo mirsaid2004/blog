@@ -5,7 +5,12 @@ import TopPicks from "./TopPicks";
 
 export default function DefaultHomeView() {
     return (
-        <section className="relative w-full bg-dot-pattern">
+        <section className="relative w-full">
+            {/* Dot grid on its own layer so it can fade in under the hero instead of starting at a hard edge. */}
+            <div
+                aria-hidden
+                className="absolute inset-0 z-0 pointer-events-none bg-dot-pattern mask-[linear-gradient(to_bottom,transparent,black_360px)]"
+            />
             {/* Global Background Elements from 404/Error Pages */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 {/* These gradients will be clipped to the section, but won't break sticky positioning of children */}

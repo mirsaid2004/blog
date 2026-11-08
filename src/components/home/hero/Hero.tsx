@@ -38,7 +38,8 @@ function Hero() {
         <div aria-hidden style={{ height: "var(--hero-sticky-extent, 0px)" }} />
       </section>
       <ScrollDownIndicator />
-      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 opacity-25 dark:opacity-100">
+      {/* The mask fades the rays out before the hero's bottom edge, so they never end in a hard seam. */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 opacity-90 dark:opacity-100 mask-[linear-gradient(to_bottom,black_35%,transparent_95%)]">
         <LightRaysAnimation />
       </div>
     </div>

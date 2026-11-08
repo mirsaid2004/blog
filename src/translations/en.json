@@ -57,7 +57,15 @@
       "noResultsTitle": "Nothing matches these filters",
       "noResultsDescription": "Try a different search term, or clear the filters to see everything.",
       "typeArticle": "Article",
-      "typePost": "Post"
+      "typePost": "Post",
+      "stats": {
+        "articles": "{count, plural, one {article} other {articles}}",
+        "posts": "{count, plural, one {post} other {posts}}",
+        "series": "{count, plural, one {series} other {series}}",
+        "parts": "{count, plural, one {part} other {parts}}",
+        "minutes": "{count, plural, one {minute of reading} other {minutes of reading}}",
+        "views": "{count, plural, one {view} other {total views}}"
+      }
     },
     "articles": {
       "eyebrow": "Articles",

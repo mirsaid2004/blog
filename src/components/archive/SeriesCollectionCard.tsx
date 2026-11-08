@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import ContentMeta from "./ContentMeta";
 import Cover from "./Cover";
 import TagList from "./TagList";
+import { GlareSurface } from "./effects/Surfaces";
 
 const PREVIEW_PARTS = 3;
 
@@ -32,7 +33,8 @@ export default function SeriesCollectionCard({ series }: { series: SeriesWithIte
   ].filter(Boolean);
 
   return (
-    <article className="group/card flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-[0_1px_2px_rgb(15_23_42/0.04)] transition-colors hover:border-primary/30 dark:shadow-none">
+    <GlareSurface className="transition-transform duration-300 hover:-translate-y-1">
+    <article className="group/card flex h-full flex-col overflow-hidden rounded-3xl">
       <div className="relative">
         <Cover
           src={series.cover}
@@ -118,5 +120,6 @@ export default function SeriesCollectionCard({ series }: { series: SeriesWithIte
         </div>
       </div>
     </article>
+    </GlareSurface>
   );
 }

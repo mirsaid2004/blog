@@ -4,6 +4,7 @@ import type { ContentItem } from "@/lib/content/types";
 import { formatDate, formatMonth } from "@/lib/content/format";
 import ContentMeta from "./ContentMeta";
 import TagList from "./TagList";
+import { SpotlightSurface } from "./effects/Surfaces";
 
 interface PostListProps {
   posts: ContentItem[];
@@ -16,11 +17,13 @@ export default function PostList({ posts, groupByMonth }: PostListProps) {
 
   if (!groupByMonth) {
     return (
-      <ol className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
-        {posts.map((post) => (
-          <PostRow key={post.id} post={post} />
-        ))}
-      </ol>
+      <SpotlightSurface size={460}>
+        <ol className="divide-y divide-border">
+          {posts.map((post) => (
+            <PostRow key={post.id} post={post} />
+          ))}
+        </ol>
+      </SpotlightSurface>
     );
   }
 
@@ -31,13 +34,14 @@ export default function PostList({ posts, groupByMonth }: PostListProps) {
   }
 
   return (
-    <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+    <SpotlightSurface size={460} className="divide-y divide-border">
       {[...groups.entries()].map(([month, items]) => (
         <section key={month} aria-labelledby={`month-${month}`}>
           <h2
             id={`month-${month}`}
-            className="bg-muted/40 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground md:px-6"
+            className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-primary md:px-6"
           >
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
             {formatMonth(`${month}-01`, locale)}
           </h2>
           <ol className="divide-y divide-border border-t border-border">
@@ -47,14 +51,14 @@ export default function PostList({ posts, groupByMonth }: PostListProps) {
           </ol>
         </section>
       ))}
-    </div>
+    </SpotlightSurface>
   );
 }
 
 function PostRow({ post }: { post: ContentItem }) {
   const locale = useLocale();
   return (
-    <li className="group relative grid gap-1 p-5 transition-colors hover:bg-muted/50 md:grid-cols-[7.5rem_1fr] md:gap-6 md:p-6">
+    <li className="group relative grid gap-1 p-5 transition-colors hover:bg-primary/4 md:grid-cols-[7.5rem_1fr] md:gap-6 md:p-6">
       <time
         dateTime={post.publishedAt}
         className="text-sm font-medium tabular-nums text-muted-foreground md:pt-0.5"

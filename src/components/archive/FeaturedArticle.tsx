@@ -5,11 +5,13 @@ import type { ContentItem } from "@/lib/content/types";
 import ContentMeta from "./ContentMeta";
 import Cover from "./Cover";
 import TagList from "./TagList";
+import { GlowSurface } from "./effects/Surfaces";
 
 export default function FeaturedArticle({ article }: { article: ContentItem }) {
   const t = useTranslations("Archive.articles");
   return (
-    <article className="group relative mb-8 grid overflow-hidden rounded-3xl border border-border bg-card shadow-[0_1px_2px_rgb(15_23_42/0.04),0_12px_32px_-16px_rgb(15_23_42/0.16)] transition-colors hover:border-primary/30 md:grid-cols-[1.15fr_1fr] dark:shadow-none">
+    <GlowSurface className="mb-8">
+    <article className="group relative grid overflow-hidden rounded-3xl md:grid-cols-[1.15fr_1fr]">
       <Cover
         src={article.cover}
         sizes="(min-width: 1024px) 640px, 100vw"
@@ -43,5 +45,6 @@ export default function FeaturedArticle({ article }: { article: ContentItem }) {
         </span>
       </div>
     </article>
+    </GlowSurface>
   );
 }

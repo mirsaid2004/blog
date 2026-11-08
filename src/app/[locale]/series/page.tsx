@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { Layers } from "lucide-react";
 import ArchiveHeader from "@/components/archive/ArchiveHeader";
 import ArchiveToolbar from "@/components/archive/ArchiveToolbar";
+import ArchiveBackdrop from "@/components/archive/effects/ArchiveBackdrop";
 import EmptyState from "@/components/archive/EmptyState";
+import Reveal from "@/components/archive/Reveal";
 import SeriesCollectionCard from "@/components/archive/SeriesCollectionCard";
 import { applyFilters, getSeries, parseFilters, tagCounts } from "@/lib/content/queries";
 
@@ -26,18 +29,21 @@ export default async function SeriesPage({ searchParams }: PageProps) {
   // Search also matches the titles of the parts inside each series.
   const results = applyFilters(all, filters, (s) => s.parts.map((p) => p.title).join(" "));
   const totalParts = all.reduce((sum, s) => sum + s.parts.length, 0);
+  const minutes = all.reduce((sum, s) => sum + s.readMinutes, 0);
 
   return (
     <main className="relative min-h-screen pb-24 pt-32 md:pt-36">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.10),transparent_65%)]" />
+      <ArchiveBackdrop variant="galaxy" />
       <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
         <ArchiveHeader
+          icon={Layers}
           eyebrow={t("series.eyebrow")}
           title={t("series.title")}
           description={t("series.description")}
           stats={[
-            { label: t("series.count", { count: all.length }) },
-            { label: t("series.parts", { count: totalParts }) },
+            { value: all.length, label: t("common.stats.series", { count: all.length }) },
+            { value: totalParts, label: t("common.stats.parts", { count: totalParts }) },
+            { value: minutes, label: t("common.stats.minutes", { count: minutes }) },
           ]}
         />
 
@@ -49,8 +55,10 @@ export default async function SeriesPage({ searchParams }: PageProps) {
           <EmptyState resetHref="/series" />
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {results.map((series) => (
-              <SeriesCollectionCard key={series.id} series={series} />
+            {results.map((series, i) => (
+              <Reveal key={series.id} index={i}>
+                <SeriesCollectionCard series={series} />
+              </Reveal>
             ))}
           </div>
         )}

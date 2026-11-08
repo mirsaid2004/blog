@@ -57,7 +57,15 @@
       "noResultsTitle": "Bu filtrlarga mos hech narsa yo'q",
       "noResultsDescription": "Boshqa so'z bilan qidirib ko'ring yoki hammasini ko'rish uchun filtrlarni tozalang.",
       "typeArticle": "Maqola",
-      "typePost": "Post"
+      "typePost": "Post",
+      "stats": {
+        "articles": "{count, plural, other {ta maqola}}",
+        "posts": "{count, plural, other {ta post}}",
+        "series": "{count, plural, other {ta seriya}}",
+        "parts": "{count, plural, other {qism}}",
+        "minutes": "{count, plural, other {daqiqa o'qish}}",
+        "views": "{count, plural, other {marta ko'rilgan}}"
+      }
     },
     "articles": {
       "eyebrow": "Maqolalar",

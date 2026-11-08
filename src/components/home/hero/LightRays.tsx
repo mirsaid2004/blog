@@ -26,6 +26,12 @@ interface LightRaysProps {
   mouseInfluence?: number;
   noiseAmount?: number;
   distortion?: number;
+  /**
+   * Composite the canvas as premultiplied alpha. The shader outputs color * strength with
+   * alpha = strength, so on light backgrounds the default (straight alpha) darkens the rays
+   * toward grey; premultiplied keeps them a clean tint of `raysColor`.
+   */
+  premultipliedAlpha?: boolean;
   className?: string;
 }
 
@@ -102,6 +108,7 @@ const LightRays: React.FC<LightRaysProps> = ({
   mouseInfluence = 0.1,
   noiseAmount = 0.0,
   distortion = 0.0,
+  premultipliedAlpha = false,
   className = "",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -159,6 +166,7 @@ const LightRays: React.FC<LightRaysProps> = ({
       const renderer = new Renderer({
         dpr: Math.min(window.devicePixelRatio, 2),
         alpha: true,
+        premultipliedAlpha,
       });
       rendererRef.current = renderer;
 
@@ -424,6 +432,7 @@ void main() {
     mouseInfluence,
     noiseAmount,
     distortion,
+    premultipliedAlpha,
   ]);
 
   useEffect(() => {
