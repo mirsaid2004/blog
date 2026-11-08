@@ -5,6 +5,12 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async redirects() {
+    return [
+      { source: "/serieses", destination: "/series", permanent: true },
+      { source: "/:locale(en|ru|uz)/serieses", destination: "/:locale/series", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {

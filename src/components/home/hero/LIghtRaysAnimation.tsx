@@ -6,21 +6,22 @@ function LightRaysAnimation() {
 
   const { resolvedTheme } = useTheme();
 
-  // Light mode settings - subtle elegant rays
+  // Light mode settings - primary-blue rays (matches --primary: 212 100% 48%)
   const lightModeSettings = {
     raysOrigin: "top-center" as const,
     raysColor: "#0072f5",
-    raysSpeed: 1.2,
-    lightSpread: 0.3,
-    rayLength: 2,
+    raysSpeed: 1,
+    lightSpread: 0.5,
+    rayLength: 2.5,
     followMouse: true,
-    mouseInfluence: 0.09,
-    noiseAmount: 0.1,
+    mouseInfluence: 0.1,
+    noiseAmount: 0,
     distortion: 0,
     className: "absolute top-0 left-0",
     pulsating: false,
-    fadeDistance: 0.1,
-    saturation: 1,
+    fadeDistance: 1,
+    saturation: 1.3,
+    premultipliedAlpha: true,
   };
 
   // Dark mode settings - bright white rays

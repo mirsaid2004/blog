@@ -3,7 +3,7 @@
     "home": "home",
     "articles": "articles",
     "posts": "posts",
-    "serieses": "serieses",
+    "series": "series",
     "about": "About",
     "work": "Work",
     "contact": "Contact"
@@ -34,5 +34,64 @@
     "subtitle": "Page not found",
     "description": "The page you are looking for doesn't exist or has been moved.",
     "backHome": "Back to home"
+  },
+  "Archive": {
+    "common": {
+      "searchPlaceholder": "Search by title, summary or topic…",
+      "searchLabel": "Search",
+      "sortLabel": "Sort by",
+      "sort": {
+        "latest": "Latest",
+        "popular": "Most viewed",
+        "top": "Top rated"
+      },
+      "topicsLabel": "Topics",
+      "allTopics": "All",
+      "clearFilters": "Clear filters",
+      "minRead": "{minutes} min read",
+      "views": "{count} views",
+      "ratings": "{rating} rating from {count} reviews",
+      "results": "{count, plural, =0 {No results} one {# result} other {# results}}",
+      "readingTime": "{minutes} min of reading",
+      "updated": "Updated {date}",
+      "noResultsTitle": "Nothing matches these filters",
+      "noResultsDescription": "Try a different search term, or clear the filters to see everything.",
+      "typeArticle": "Article",
+      "typePost": "Post",
+      "stats": {
+        "articles": "{count, plural, one {article} other {articles}}",
+        "posts": "{count, plural, one {post} other {posts}}",
+        "series": "{count, plural, one {series} other {series}}",
+        "parts": "{count, plural, one {part} other {parts}}",
+        "minutes": "{count, plural, one {minute of reading} other {minutes of reading}}",
+        "views": "{count, plural, one {view} other {total views}}"
+      }
+    },
+    "articles": {
+      "eyebrow": "Articles",
+      "title": "Long-form deep dives",
+      "description": "In-depth pieces on systems architecture, performance and the web platform. Written to be read end to end.",
+      "count": "{count, plural, one {# article} other {# articles}}",
+      "featured": "Featured",
+      "readCta": "Read article"
+    },
+    "posts": {
+      "eyebrow": "Posts",
+      "title": "Short notes and quick takes",
+      "description": "Smaller write-ups: benchmarks, tooling tips, opinions and lessons learned. Each one fits in a coffee break.",
+      "count": "{count, plural, one {# post} other {# posts}}"
+    },
+    "series": {
+      "eyebrow": "Series",
+      "title": "Learn a topic end to end",
+      "description": "Hand-picked articles and posts arranged in reading order, so you can go from fundamentals to advanced in one path.",
+      "count": "{count, plural, one {# series} other {# series}}",
+      "parts": "{count, plural, one {# part} other {# parts}}",
+      "articles": "{count, plural, one {# article} other {# articles}}",
+      "posts": "{count, plural, one {# post} other {# posts}}",
+      "moreParts": "+{count} more",
+      "startCta": "Start the series",
+      "viewCta": "View series"
+    }
   }
 }

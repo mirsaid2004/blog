@@ -3,7 +3,7 @@
     "home": "bosh sahifa",
     "articles": "maqolalar",
     "posts": "postlar",
-    "serieses": "seriyalar",
+    "series": "seriyalar",
     "about": "Men haqimda",
     "work": "Ishlar",
     "contact": "Aloqa"
@@ -34,5 +34,64 @@
     "subtitle": "Sahifa topilmadi",
     "description": "Siz izlayotgan sahifa mavjud emas yoki ko'chirilgan.",
     "backHome": "Bosh sahifaga"
+  },
+  "Archive": {
+    "common": {
+      "searchPlaceholder": "Sarlavha, tavsif yoki mavzu bo'yicha qidirish…",
+      "searchLabel": "Qidirish",
+      "sortLabel": "Saralash",
+      "sort": {
+        "latest": "Eng yangi",
+        "popular": "Ko'p ko'rilgan",
+        "top": "Yuqori baholangan"
+      },
+      "topicsLabel": "Mavzular",
+      "allTopics": "Barchasi",
+      "clearFilters": "Filtrlarni tozalash",
+      "minRead": "{minutes} daqiqa o'qish",
+      "views": "{count} marta ko'rilgan",
+      "ratings": "{count} ta baho asosida {rating} reyting",
+      "results": "{count, plural, =0 {Hech narsa topilmadi} other {# ta natija}}",
+      "readingTime": "{minutes} daqiqa o'qish",
+      "updated": "Yangilangan: {date}",
+      "noResultsTitle": "Bu filtrlarga mos hech narsa yo'q",
+      "noResultsDescription": "Boshqa so'z bilan qidirib ko'ring yoki hammasini ko'rish uchun filtrlarni tozalang.",
+      "typeArticle": "Maqola",
+      "typePost": "Post",
+      "stats": {
+        "articles": "{count, plural, other {ta maqola}}",
+        "posts": "{count, plural, other {ta post}}",
+        "series": "{count, plural, other {ta seriya}}",
+        "parts": "{count, plural, other {qism}}",
+        "minutes": "{count, plural, other {daqiqa o'qish}}",
+        "views": "{count, plural, other {marta ko'rilgan}}"
+      }
+    },
+    "articles": {
+      "eyebrow": "Maqolalar",
+      "title": "Chuqur tahliliy maqolalar",
+      "description": "Tizim arxitekturasi, unumdorlik va veb-platforma haqida batafsil maqolalar. Boshidan oxirigacha o'qish uchun yozilgan.",
+      "count": "{count, plural, other {# ta maqola}}",
+      "featured": "Tavsiya etiladi",
+      "readCta": "Maqolani o'qish"
+    },
+    "posts": {
+      "eyebrow": "Postlar",
+      "title": "Qisqa qaydlar va fikrlar",
+      "description": "Kichik yozuvlar: benchmarklar, vositalar bo'yicha maslahatlar, fikrlar va saboqlar. Har biri qahva tanaffusiga sig'adi.",
+      "count": "{count, plural, other {# ta post}}"
+    },
+    "series": {
+      "eyebrow": "Seriyalar",
+      "title": "Mavzuni boshidan oxirigacha o'rganing",
+      "description": "O'qish tartibida saralangan maqola va postlar — asoslardan murakkab darajagacha bitta yo'l.",
+      "count": "{count, plural, other {# ta seriya}}",
+      "parts": "{count, plural, other {# qism}}",
+      "articles": "{count, plural, other {# ta maqola}}",
+      "posts": "{count, plural, other {# ta post}}",
+      "moreParts": "yana {count} ta",
+      "startCta": "Seriyani boshlash",
+      "viewCta": "Seriyani ko'rish"
+    }
   }
 }
