@@ -1,10 +1,7 @@
 'use client';
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupInput,
-} from "@/components/ui/input-group"
-import { SearchIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
+import SearchField from "@/components/shared/SearchField"
+import { useUrlSearchQuery } from "@/components/shared/use-url-search-query"
 import QueryBadgeButton from "./QueryBadgeButton"
 import { motion, useScroll, useSpring, useTransform, AnimatePresence, easeInOut } from "framer-motion"
 import { useState, useEffect, useRef } from "react"
@@ -39,6 +36,8 @@ function HeroFilterings() {
     const { scrollY } = useScroll();
     const dockPoint = useDockPoint();
     const isDocked = useIsDocked();
+    const t = useTranslations("Archive.common");
+    const { query, setQuery, isPending } = useUrlSearchQuery("q");
 
     const anchorRef = useRef<HTMLDivElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
@@ -164,16 +163,16 @@ function HeroFilterings() {
                     style={{ height: inputHeight, width: "100%" }}
                     className={`transition-[margin] duration-300 ${isDocked ? "mb-2" : "mb-0"}`}
                 >
-                    <InputGroup className="w-full h-full rounded-full shadow-lg bg-white/50 dark:bg-white/5 border-black/5 dark:border-white/10 transition-colors">
-                        <InputGroupInput
-                            className="h-full ml-2 text-foreground placeholder:text-muted-foreground border-none focus:ring-0 bg-transparent text-base"
-                            id="hero-search-input"
-                            placeholder="Search for articles, architectures, or tools..."
-                        />
-                        <InputGroupAddon align="inline-start" className="ml-3">
-                            <SearchIcon className="text-muted-foreground size-5" />
-                        </InputGroupAddon>
-                    </InputGroup>
+                    <SearchField
+                        id="hero-search-input"
+                        value={query}
+                        onValueChange={setQuery}
+                        pending={isPending}
+                        placeholder="Search for articles, architectures, or tools..."
+                        label={t("searchLabel")}
+                        clearLabel={t("clearFilters")}
+                        className="h-full"
+                    />
                 </motion.div>
 
                 <AnimatePresence>

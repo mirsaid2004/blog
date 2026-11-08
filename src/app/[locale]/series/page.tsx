@@ -34,7 +34,8 @@ export default async function SeriesPage({ searchParams }: PageProps) {
   return (
     <main className="relative min-h-screen pb-24 pt-32 md:pt-36">
       <ArchiveBackdrop variant="galaxy" />
-      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+      {/* Header and toolbar share the posts page width; the content grid stays wider. */}
+      <div className="mx-auto w-full max-w-4xl px-4 md:px-6">
         <ArchiveHeader
           icon={Layers}
           eyebrow={t("series.eyebrow")}
@@ -50,7 +51,9 @@ export default async function SeriesPage({ searchParams }: PageProps) {
         <Suspense>
           <ArchiveToolbar tags={tagCounts(all)} resultCount={results.length} />
         </Suspense>
+      </div>
 
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
         {results.length === 0 ? (
           <EmptyState resetHref="/series" />
         ) : (

@@ -15,6 +15,8 @@ type BlurTextProps = {
   text?: string;
   delay?: number;
   className?: string;
+  /** Extra classes for each animated word/letter span (e.g. a per-word gradient). */
+  pieceClassName?: string;
   animateBy?: 'words' | 'letters';
   direction?: 'top' | 'bottom' | 'left' | 'right';
   threshold?: number;
@@ -215,6 +217,7 @@ const BlurText = ({
   text = '',
   delay = 200,
   className = '',
+  pieceClassName = '',
   animateBy = 'words',
   direction = 'top',
   threshold = 0.1,
@@ -388,7 +391,7 @@ const BlurText = ({
       <motion.span
         aria-hidden="true"
         key={piece.key}
-        className="inline-block will-change-[transform,filter,opacity]"
+        className={`inline-block will-change-[transform,filter,opacity] ${pieceClassName}`}
         style={style}
         initial={firstPhase === 'rest' ? false : fromSnapshot}
         animate={target}

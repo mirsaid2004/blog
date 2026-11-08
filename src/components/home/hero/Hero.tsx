@@ -1,5 +1,5 @@
-
 import dynamic from "next/dynamic";
+import BlurText from "@/components/react-bits/BlurText";
 
 const LightRaysAnimation = dynamic(() => import('./LIghtRaysAnimation'));
 const HeroFilterings = dynamic(() => import('./HeroFilterings'));
@@ -23,14 +23,24 @@ function Hero() {
         className="pt-40 text-center px-4 md:px-6 pointer-events-none"
         style={{ marginBottom: "calc(-1 * var(--hero-sticky-extent, 0px))" }}
       >
-        <h1
-          className={
-            "pointer-events-auto text-5xl/normal md:text-7xl/normal font-extrabold mb-2 bg-[linear-gradient(180deg,var(--color-slate-700),var(--color-foreground))] dark:bg-[linear-gradient(180deg,var(--color-white)_45%,var(--color-slate-700))] bg-clip-text text-transparent"
-          }
-        >
-          Engineering Insights
-        </h1>
-        <p className="pointer-events-auto text-foreground text-lg max-w-2xl mx-auto pb-5">
+        {/* BlurText renders a <p>; keep a real <h1> for document structure and assistive tech. */}
+        <h1 className="sr-only">Engineering Insights</h1>
+        <div aria-hidden className="pointer-events-auto">
+          {/*
+            Each word carries the gradient itself: `bg-clip-text` on the parent can't paint
+            through children that are transformed / blurred while they animate in.
+          */}
+          <BlurText
+            text="Engineering Insights"
+            animateBy="words"
+            direction="bottom"
+            delay={120}
+            trigger="load"
+            className="mb-2 justify-center text-5xl/normal font-extrabold md:text-7xl/normal"
+            pieceClassName="bg-[linear-gradient(180deg,var(--color-slate-700),var(--color-foreground))] dark:bg-[linear-gradient(180deg,var(--color-white)_45%,var(--color-slate-700))] bg-clip-text text-transparent"
+          />
+        </div>
+        <p className="pointer-events-auto text-foreground text-lg max-w-2xl mx-auto pb-5 animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-300 duration-700">
           Deep dives into software architecture, modern web technologies, and
           scalable systems design.
         </p>
