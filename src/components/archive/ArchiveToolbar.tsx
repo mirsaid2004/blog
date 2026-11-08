@@ -48,20 +48,26 @@ export default function ArchiveToolbar({ tags, resultCount }: ArchiveToolbarProp
     return qs ? `${pathname}?${qs}` : pathname;
   };
 
-  // Debounced push of the search query into the URL.
+  // Debounced push of the search query into the URL. Re-running on urlQuery cancels a
+  // pending push when the URL changes elsewhere (e.g. "Clear filters"), and the target
+  // URL is built from the live location when the timer fires, so filters changed while
+  // it was pending (tag, sort) are kept.
   useEffect(() => {
     const trimmed = query.trim();
     if (trimmed === urlQuery) return;
     const timer = setTimeout(() => {
       setPushedQuery(trimmed);
+      const params = new URLSearchParams(window.location.search);
+      if (trimmed) params.set("q", trimmed);
+      else params.delete("q");
+      const qs = params.toString();
+      const href = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
       startTransition(() => {
-        router.replace(hrefWith({ q: trimmed || null }), { scroll: false });
+        router.replace(href, { scroll: false });
       });
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-    // hrefWith is derived from searchParams/pathname, which are already covered by urlQuery changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, urlQuery, router]);
 
   // "/" focuses the search box, like most docs and blog sites.
   useEffect(() => {
@@ -177,7 +183,10 @@ export default function ArchiveToolbar({ tags, resultCount }: ArchiveToolbarProp
               href={pathname}
               scroll={false}
               replace
-              onClick={() => setQuery("")}
+              onClick={() => {
+                setQuery("");
+                setPushedQuery("");
+              }}
               className="font-medium text-primary hover:underline"
             >
               {t("clearFilters")}

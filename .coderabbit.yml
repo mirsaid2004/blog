@@ -1,0 +1,14 @@
+# .coderabbit.yaml
+language: "en"
+reviews:
+  auto_review: true
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/.next/**"
+    - "!**/out/**"
+    - "!**/*.log"
+    - "!package-lock.json"
+    - "!yarn.lock"
+    - "!pnpm-lock.yaml"
+  chat:
+    enabled: true
