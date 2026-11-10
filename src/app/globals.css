@@ -324,3 +324,34 @@ body {
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 } */
+/* Article bodies: code from rehype-pretty-code (Shiki dual theme via CSS variables). */
+@layer components {
+  .article-body :not(pre) > code {
+    @apply rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground;
+  }
+  .article-body figure[data-rehype-pretty-code-figure] {
+    @apply my-6 overflow-hidden rounded-xl border border-border bg-card;
+  }
+  .article-body figcaption[data-rehype-pretty-code-title] {
+    @apply border-b border-border bg-muted/50 px-4 py-2 font-mono text-xs text-muted-foreground;
+  }
+  .article-body pre {
+    @apply overflow-x-auto py-4 font-mono text-[13px] leading-6;
+  }
+  .article-body pre code {
+    display: grid;
+    min-width: 100%;
+  }
+  .article-body pre [data-line] {
+    @apply px-4;
+  }
+  .article-body pre [data-highlighted-line] {
+    @apply border-l-2 border-primary bg-primary/10 pl-[14px];
+  }
+  .article-body pre code span {
+    color: var(--shiki-light);
+  }
+  .dark .article-body pre code span {
+    color: var(--shiki-dark);
+  }
+}

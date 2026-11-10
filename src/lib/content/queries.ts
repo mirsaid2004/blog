@@ -16,6 +16,10 @@ export function getArticles(): ContentItem[] {
   return ARTICLES;
 }
 
+export function getArticleBySlug(slug: string): ContentItem | undefined {
+  return ARTICLES.find((article) => article.slug === slug);
+}
+
 export function getPosts(): ContentItem[] {
   return POSTS;
 }

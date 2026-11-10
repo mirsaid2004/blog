@@ -1,0 +1,117 @@
+---
+title: Understanding CPU Caches & Memory Barriers
+---
+
+A modern CPU core can retire several instructions per nanosecond, but a trip to main memory takes on the order of a hundred nanoseconds. Almost everything about performance-sensitive code follows from that gap. This article covers how caches hide it, why that makes concurrent code surprising, and how memory barriers restore order.
+
+## The memory hierarchy
+
+Each level trades size for speed. Rough numbers for a current desktop core:
+
+| Level | Typical size | Latency |
+| --- | --- | --- |
+| L1 data | 32–48 KB | ~1 ns |
+| L2 | 1–2 MB | ~4 ns |
+| L3 (shared) | 16–64 MB | ~15 ns |
+| DRAM | GBs | ~80–100 ns |
+
+### Cache lines
+
+Caches don't move single bytes. They move fixed-size **cache lines**, usually 64 bytes. Touching one byte pulls in its 63 neighbours, which is why sequential access is so fast and pointer chasing is so slow.
+
+### Locality
+
+Two kinds of locality decide whether the cache helps you:
+
+- **Spatial locality:** you will soon use data near what you just used.
+- **Temporal locality:** you will soon use the same data again.
+
+Arrays of structs, linked lists and hash maps all score differently on these, and that often matters more than their big-O complexity.
+
+## Coherence between cores
+
+Every core has private L1 and L2 caches, so the same line can live in several places at once. A coherence protocol keeps those copies consistent.
+
+### The MESI protocol
+
+Each cached line is in one of four states:
+
+- **Modified** — only this core has it, and it differs from memory.
+- **Exclusive** — only this core has it, and it matches memory.
+- **Shared** — several cores may hold read-only copies.
+- **Invalid** — the copy is stale and must be re-fetched.
+
+Writing to a line forces every other core's copy to *Invalid*. That invalidation traffic is the hidden cost of shared mutable state.
+
+### False sharing
+
+Two threads writing to *different* variables can still fight if those variables share a cache line:
+
+```cpp title="counters.cpp"
+struct Counters {
+    std::atomic<uint64_t> a; // written by thread 1
+    std::atomic<uint64_t> b; // written by thread 2 — same 64-byte line!
+};
+```
+
+Each write invalidates the other core's copy, and the line ping-pongs between cores. The fix is to pad the hot fields onto separate lines:
+
+```cpp {2-3}
+struct Counters {
+    alignas(64) std::atomic<uint64_t> a;
+    alignas(64) std::atomic<uint64_t> b;
+};
+```
+
+## Memory ordering
+
+Coherence keeps each *single* location consistent. It says nothing about the order in which *different* locations become visible to other cores.
+
+### Reordering by the compiler
+
+The compiler may reorder independent loads and stores, keep values in registers, or remove writes it considers dead. In single-threaded code you can't tell. In concurrent code, another thread can.
+
+### Reordering by the hardware
+
+CPUs buffer stores and execute loads out of order. On x86, a later load may complete before an earlier store to a different address. On ARM and POWER, almost any reordering of independent accesses is allowed.
+
+#### A classic broken flag
+
+```cpp
+// Thread 1                 // Thread 2
+data = 42;                  while (!ready) {}
+ready = true;               assert(data == 42); // can fail!
+```
+
+Without ordering guarantees, thread 2 can see `ready == true` before it sees the write to `data`.
+
+## Memory barriers
+
+A barrier (or fence) constrains reordering across it. In C++ you rarely write raw fences. You attach an ordering to the atomic operation itself.
+
+### Acquire and release
+
+The fix for the broken flag:
+
+```cpp {3,6}
+std::atomic<bool> ready{false};
+// Thread 1
+data = 42;
+ready.store(true, std::memory_order_release);
+// Thread 2
+while (!ready.load(std::memory_order_acquire)) {}
+assert(data == 42); // guaranteed
+```
+
+A *release* store makes every earlier write visible to any thread that performs an *acquire* load and reads that value. This pairing is enough for most producer/consumer handoffs.
+
+### Sequential consistency
+
+`memory_order_seq_cst`, the default, adds a single global order of all such operations. It is the easiest to reason about and costs a full fence on most architectures — usually fine, occasionally a bottleneck.
+
+## Practical guidelines
+
+- Lay out hot data contiguously, and keep data written by different threads on different cache lines.
+- Prefer message passing or per-thread state over shared mutable state.
+- Use acquire/release for handoffs, and reach for relaxed ordering only with a proof in hand.
+- Measure with hardware counters (`perf stat -e cache-misses`) before and after every change.
