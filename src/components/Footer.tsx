@@ -74,9 +74,9 @@ export function Footer() {
   const footerLinks = {
     navigation: [
       { label: tNav("home"), href: "/" },
-      { label: tNav("about"), href: "/#about" },
-      { label: tNav("work"), href: "/#projects" },
-      { label: tNav("contact"), href: "/contact" },
+      { label: tNav("articles"), href: "/articles" },
+      { label: tNav("posts"), href: "/posts" },
+      { label: tNav("series"), href: "/series" },
     ],
     resources: [
       {
@@ -84,7 +84,6 @@ export function Footer() {
         href: "https://www.npmjs.com/~mirsaid_dev",
       },
       { label: t("resources.github"), href: "https://github.com/mirsaid2004" },
-      { label: t("resources.blog"), href: "/blog" },
       { label: t("resources.resume"), onClick: handleDownloadResume },
     ],
   };
@@ -150,7 +149,7 @@ export function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground hover:text-primary transition-colors duration-300 text-sm"
+                    className="text-muted-foreground hover:text-primary transition-colors duration-300 text-sm capitalize"
                   >
                     {link.label}
                   </Link>

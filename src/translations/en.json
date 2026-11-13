@@ -3,10 +3,7 @@
     "home": "home",
     "articles": "articles",
     "posts": "posts",
-    "series": "series",
-    "about": "About",
-    "work": "Work",
-    "contact": "Contact"
+    "series": "series"
   },
   "Footer": {
     "brandName": "M_DEV",
@@ -16,7 +13,6 @@
     "resources": {
       "npmPackages": "NPM Packages",
       "github": "GitHub",
-      "blog": "Blog",
       "resume": "Resume"
     },
     "copyright": "M_DEV. Built with",

@@ -3,10 +3,7 @@
     "home": "главная",
     "articles": "статьи",
     "posts": "посты",
-    "series": "серии",
-    "about": "Обо мне",
-    "work": "Работы",
-    "contact": "Контакты"
+    "series": "серии"
   },
   "Footer": {
     "brandName": "M_DEV",
@@ -16,7 +13,6 @@
     "resources": {
       "npmPackages": "NPM-пакеты",
       "github": "GitHub",
-      "blog": "Блог",
       "resume": "Резюме"
     },
     "copyright": "M_DEV. Сделано с",

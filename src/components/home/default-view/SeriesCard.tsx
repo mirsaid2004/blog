@@ -1,5 +1,6 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import { Link } from '@/i18n/routing';
 import style from './SeriesCard.module.css';
 
 export interface SeriesCardProps {
@@ -88,9 +89,9 @@ export default function SeriesCard({ title, description, date, parts, categories
 
     if (href) {
         return (
-            <a href={href} className="block w-full h-full no-underline">
+            <Link href={href} className="block w-full h-full no-underline">
                 {content}
-            </a>
+            </Link>
         );
     }
 

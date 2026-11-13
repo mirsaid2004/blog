@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Clock, Eye, Star } from "lucide-react";
 
 interface BlogCardProps {
@@ -13,7 +13,7 @@ interface BlogCardProps {
     rating: number;
     reviews: number;
     views: string;
-    slug: string;
+    href: string;
 }
 
 export default function BlogCard({
@@ -27,10 +27,10 @@ export default function BlogCard({
     rating,
     reviews,
     views,
-    slug,
+    href,
 }: BlogCardProps) {
     return (
-        <Link href={`/blog/${slug}`} className="group block h-full">
+        <Link href={href} className="group block h-full">
             <div className="relative h-full flex flex-col bg-white dark:bg-slate-900/70 rounded-4xl border border-slate-200 dark:border-white/10 overflow-hidden transition-all duration-300 shadow-[0_1px_2px_rgb(15_23_42/0.06),0_8px_24px_rgb(15_23_42/0.06)] dark:shadow-none hover:shadow-2xl hover:shadow-primary/20 hover:border-slate-300 dark:hover:border-white/20 outline-1 outline-transparent hover:outline-primary/30">
                 {/* Image Container */}
                 <div className="relative aspect-16/10 w-full overflow-hidden">
