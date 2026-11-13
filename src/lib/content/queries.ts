@@ -16,8 +16,16 @@ export function getArticles(): ContentItem[] {
   return ARTICLES;
 }
 
+export function getArticleBySlug(slug: string): ContentItem | undefined {
+  return ARTICLES.find((article) => article.slug === slug);
+}
+
 export function getPosts(): ContentItem[] {
   return POSTS;
+}
+
+export function getPostBySlug(slug: string): ContentItem | undefined {
+  return POSTS.find((post) => post.slug === slug);
 }
 
 export function getSeries(): SeriesWithItems[] {
@@ -37,17 +45,46 @@ export function getSeries(): SeriesWithItems[] {
   });
 }
 
+export function getSeriesBySlug(slug: string): SeriesWithItems | undefined {
+  return getSeries().find((series) => series.slug === slug);
+}
+
+export interface SeriesContext {
+  series: SeriesWithItems;
+  /** Zero-based position of the item in the series. */
+  index: number;
+  prev: ContentItem | null;
+  next: ContentItem | null;
+}
+
+/**
+ * Where an item sits in the series it was opened from (`?series=<slug>`).
+ * Null when the slug is missing, unknown, or the series doesn't include the item.
+ */
+export function getSeriesContext(itemId: string, seriesSlug: string | undefined): SeriesContext | null {
+  if (!seriesSlug) return null;
+  const series = getSeriesBySlug(seriesSlug);
+  const index = series?.parts.findIndex((part) => part.id === itemId) ?? -1;
+  if (!series || index === -1) return null;
+  return {
+    series,
+    index,
+    prev: series.parts[index - 1] ?? null,
+    next: series.parts[index + 1] ?? null,
+  };
+}
+
 type SearchParams = Record<string, string | string[] | undefined>;
 
-function first(value: string | string[] | undefined): string | undefined {
+export function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
 export function parseFilters(params: SearchParams): ArchiveFilters {
-  const sort = first(params.sort);
-  const tag = first(params.tag)?.trim().toLowerCase();
+  const sort = firstParam(params.sort);
+  const tag = firstParam(params.tag)?.trim().toLowerCase();
   return {
-    q: first(params.q)?.trim() ?? "",
+    q: firstParam(params.q)?.trim() ?? "",
     tag: tag || null,
     sort: SORT_KEYS.includes(sort as SortKey) ? (sort as SortKey) : "latest",
   };

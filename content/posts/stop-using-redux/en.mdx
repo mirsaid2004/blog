@@ -1,0 +1,45 @@
+---
+title: Why I Stopped Using Redux
+---
+
+For years every React app I started had a `store/` folder on day one. Most of what lived there wasn't really global state. It was server data with a cache problem, plus a few UI flags that only one screen cared about.
+
+## What the store was actually holding
+
+When I audited one mid-sized app, the store split roughly like this:
+
+| Kind of state | Share | Better home |
+| --- | --- | --- |
+| Server data (lists, details) | ~70% | React Query |
+| Form and UI state | ~20% | Component state |
+| Truly global (auth, theme) | ~10% | Small Zustand store |
+
+## Server data belongs in a cache
+
+React Query handles fetching, caching, deduplication and background refetching. That replaced most of our reducers, thunks and loading flags:
+
+```tsx
+const { data, isPending } = useQuery({
+  queryKey: ["posts", page],
+  queryFn: () => fetchPosts(page),
+});
+```
+
+### Invalidation instead of manual updates
+
+After a mutation, invalidate the query key and let the cache refetch, rather than hand-patching normalized entities.
+
+## The little global state left over
+
+What remained fit in a few lines of Zustand:
+
+```ts
+export const useSession = create<SessionState>((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+}));
+```
+
+## When Redux still makes sense
+
+Redux is still a good fit for complex client-side workflows: editors, undo/redo, or apps where many distant components update the same state and you want time-travel debugging.

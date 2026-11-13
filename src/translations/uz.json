@@ -93,5 +93,29 @@
       "startCta": "Seriyani boshlash",
       "viewCta": "Seriyani ko'rish"
     }
+  },
+  "Article": {
+    "onThisPage": "Ushbu sahifada",
+    "backToArticles": "Barcha maqolalar",
+    "bodyMissing": "Ushbu maqolaning to'liq matni tez orada qo'shiladi.",
+    "fallbackNotice": "Bu maqola hali sizning tilingizda mavjud emas, shuning uchun ingliz tilida ko'rsatilmoqda."
+  },
+  "Post": {
+    "onThisPage": "Ushbu sahifada",
+    "backToPosts": "Barcha postlar",
+    "bodyMissing": "Ushbu postning to'liq matni tez orada qo'shiladi.",
+    "fallbackNotice": "Bu post hali sizning tilingizda mavjud emas, shuning uchun ingliz tilida ko'rsatilmoqda."
+  },
+  "SeriesNav": {
+    "label": "Seriya: {title}",
+    "partOf": "{total} qismdan {current}-qism",
+    "previous": "Oldingi",
+    "next": "Keyingi",
+    "finished": "Seriya yakuni",
+    "backToSeries": "Seriya sahifasiga qaytish"
+  },
+  "SeriesDetail": {
+    "backToSeries": "Barcha seriyalar",
+    "readingOrder": "O'qish tartibi"
   }
 }

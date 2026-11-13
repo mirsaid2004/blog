@@ -1,0 +1,353 @@
+---
+title: Architecting Zero-Cost Abstractions in Systems Languages
+---
+
+"Zero-cost" is one of the most quoted and least understood promises in systems programming. It does not mean an abstraction is free to write, free to compile or free to understand. It means something narrower and more useful: **you pay nothing at runtime for the abstraction that you would not have paid writing the low-level code by hand.**
+
+This article walks through how to design APIs that keep that promise, how to check that they do, and where the promise quietly breaks.
+
+## What "zero-cost" actually means
+
+The phrase goes back to Bjarne Stroustrup's two principles for C++:
+
+1. What you don't use, you don't pay for.
+2. What you do use, you couldn't hand-code any better.
+
+The second principle is the interesting one. It is a claim about the *generated machine code*, not about the source. An iterator chain, a newtype wrapper or a generic function is zero-cost when the optimizer can see through it completely and emit the same instructions you would have written yourself.
+
+### The compiler is your co-author
+
+Every zero-cost abstraction is a contract between you and the optimizer. You provide enough static information — concrete types, visible function bodies, no hidden aliasing — and the optimizer removes the scaffolding. When you withhold that information, the scaffolding stays in the binary.
+
+### Costs that never go away
+
+Some costs are real even when the runtime cost is zero:
+
+- **Compile time.** Monomorphization generates one copy of a generic function per concrete type.
+- **Binary size.** Those copies all ship.
+- **Debug builds.** Without optimization, every layer of abstraction is a real function call.
+
+## Building blocks
+
+Three techniques do most of the work in practice.
+
+### Newtypes
+
+A newtype wraps a primitive to give it a distinct type without changing its representation:
+
+```rust title="units.rs"
+#[repr(transparent)]
+#[derive(Clone, Copy, PartialEq, PartialOrd)]
+pub struct Meters(f64);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, PartialEq, PartialOrd)]
+pub struct Seconds(f64);
+
+pub fn speed(d: Meters, t: Seconds) -> f64 {
+    d.0 / t.0
+}
+```
+
+`#[repr(transparent)]` guarantees the wrapper has exactly the layout of the inner `f64`. Passing `Meters` costs the same as passing a float, but mixing up distance and time is now a compile error.
+
+### Generics and monomorphization
+
+Generic code is specialized per concrete type, so the optimizer sees fully concrete code:
+
+```rust
+fn sum_all<I: Iterator<Item = u64>>(iter: I) -> u64 {
+    iter.fold(0, |acc, x| acc + x)
+}
+```
+
+For a `Range<u64>`, this compiles down to the closed-form arithmetic or a tight loop — no virtual calls, no allocation.
+
+#### When to reach for `dyn` instead
+
+Dynamic dispatch trades a pointer indirection for a single shared copy of the code. Use it when the set of types is open-ended or when binary size matters more than the last few nanoseconds.
+
+### Iterator chains
+
+Iterator adapters are the canonical example. This chain:
+
+```rust {2-4}
+let total: u64 = values
+    .iter()
+    .filter(|v| **v % 2 == 0)
+    .map(|v| v * v)
+    .sum();
+```
+
+produces the same loop as a hand-written `for` with an `if` inside it. The highlighted adapters exist only in the source.
+
+## Verifying the claim
+
+"Trust me, it optimizes" is not engineering. Check it.
+
+### Reading the assembly
+
+Compiler Explorer (godbolt.org) is the fastest feedback loop. Compile both the abstract and the hand-written version with `-C opt-level=3` and diff the output. If the instruction streams match, the abstraction is zero-cost *for that compiler and those flags*.
+
+### Benchmarks that don't lie
+
+Micro-benchmarks are easy to get wrong. Two rules catch most mistakes:
+
+- Use `std::hint::black_box` so the optimizer can't delete the work you are measuring.
+- Compare distributions, not single runs. Tools like `criterion` report confidence intervals for a reason.
+
+## Where abstractions leak
+
+The promise breaks in predictable places:
+
+| Situation | Why it costs |
+| --- | --- |
+| Function not inlined across crates | The optimizer can't see the body, so the call stays |
+| Trait objects in hot loops | Indirect calls block inlining and vectorization |
+| Bounds checks the compiler can't prove away | Each access keeps a compare and a branch |
+| Debug builds | No optimization, so every layer is real |
+
+Most of these have escape hatches — `#[inline]`, slicing up front so bounds are provable, or restructuring so the hot loop sees concrete types.
+
+## Ownership as a zero-cost abstraction
+
+Ownership and borrowing are checked entirely at compile time. The borrow checker produces no runtime code at all: references are plain pointers, and lifetimes are erased before code generation.
+
+### Moves are memcpy, not magic
+
+A move transfers ownership by copying the bytes of the value and forgetting the source. For a `Vec<T>` that's three machine words — pointer, capacity and length — regardless of how many elements the vector holds. The heap buffer itself never moves.
+
+### Drop glue
+
+When a value goes out of scope, the compiler inserts calls to its destructor. This "drop glue" is exactly the cleanup code you would have written by hand, placed exactly where you would have placed it. Types without a destructor generate no glue at all.
+
+#### Drop flags
+
+When a value is moved out only on some paths, the compiler tracks at runtime whether it still needs dropping. These *drop flags* are a single byte on the stack and are usually optimized away when the paths can be resolved statically.
+
+### Borrowing without reference counting
+
+Shared `&T` and exclusive `&mut T` references give you aliasing guarantees that would otherwise need reference counting or locks. Because exclusive references can't alias, the optimizer can keep values in registers across writes, a guarantee C compilers only get from `restrict`.
+
+## Memory layout and representation
+
+The cheapest abstraction is one that doesn't change the bytes at all. Rust gives you fine control over how types are laid out.
+
+### Niche optimization
+
+`Option<&T>` is the same size as `&T`. References can never be null, so the compiler uses the null value to represent `None`. The same trick applies to `Option<Box<T>>`, `Option<NonZeroU32>` and any enum whose payload has an unused bit pattern.
+
+```rust
+use std::mem::size_of;
+
+assert_eq!(size_of::<&u64>(), size_of::<Option<&u64>>());
+assert_eq!(size_of::<Box<u8>>(), size_of::<Option<Box<u8>>>());
+```
+
+### Field reordering
+
+By default, the compiler is free to reorder struct fields to minimize padding. A struct of `u8`, `u64`, `u8` takes 16 bytes instead of 24.
+
+#### When you need a stable layout
+
+Use `#[repr(C)]` for FFI or for memory you share with other processes. You give up automatic reordering, so order fields from largest to smallest yourself.
+
+#### Packed structs
+
+`#[repr(packed)]` removes padding entirely, at the cost of unaligned access. Taking a reference to a packed field is an error, because unaligned references are undefined behaviour.
+
+### Zero-sized types
+
+A struct with no fields occupies no memory. `Vec<()>` never allocates, and a `HashMap<K, ()>` is a set with no storage overhead for values. Zero-sized marker types are a free way to encode state in the type system.
+
+## Compile-time computation
+
+Work done by the compiler is work the program never does.
+
+### `const fn`
+
+Functions marked `const fn` can run during compilation when called in a constant context. Lookup tables, hash seeds and parsed configuration can all be computed before the program starts.
+
+```rust
+const fn fib(n: u32) -> u64 {
+    let (mut a, mut b) = (0u64, 1u64);
+    let mut i = 0;
+    while i < n {
+        (a, b) = (b, a + b);
+        i += 1;
+    }
+    a
+}
+
+const FIB_50: u64 = fib(50); // computed at compile time
+```
+
+### Const generics
+
+Array lengths and other constants can be type parameters. A `Matrix<3, 3>` has its dimensions baked into the type, so loops over it have known trip counts and can be fully unrolled.
+
+### Type-state builders
+
+Encoding the state of a builder in its type moves validation to compile time. A `RequestBuilder<NoUrl>` simply has no `send` method; once you call `.url(...)` you get a `RequestBuilder<HasUrl>` that does. The state types are zero-sized, so the builder is the same size either way.
+
+## Error handling without exceptions
+
+`Result<T, E>` is an ordinary enum. Returning an error is a normal return, and the `?` operator is sugar for a match and an early return.
+
+### The happy path stays fast
+
+Because errors are values, there's no unwinding table lookup on the error path and no hidden control flow on the happy path. Branch predictors handle the rarely-taken error branch well.
+
+### Sizing your error types
+
+A large error type makes every `Result` large, even on success. If your error carries a lot of context, box it: `Result<T, Box<Error>>` is one pointer wider than `T` instead of the full error size.
+
+## Case study: a zero-cost ring buffer
+
+To pull these ideas together, let's design a fixed-capacity ring buffer that compiles down to the same code as a hand-written C version. This section is deliberately long: it walks through every decision, with the measurements that justify it.
+
+### Requirements
+
+The buffer should:
+
+- Hold up to `N` elements, with `N` known at compile time.
+- Never allocate after construction.
+- Offer `push` and `pop` in constant time.
+- Be usable from a single producer and a single consumer thread without locks.
+
+These requirements rule out `VecDeque`, which can grow, and anything with a mutex.
+
+### Choosing the representation
+
+The core of the buffer is an array plus two indices:
+
+```rust title="ring.rs"
+pub struct Ring<T, const N: usize> {
+    buf: [MaybeUninit<T>; N],
+    head: usize, // next slot to read
+    tail: usize, // next slot to write
+}
+```
+
+`MaybeUninit<T>` lets us keep slots uninitialized without paying for a default value or an `Option` tag. The const generic `N` puts the capacity in the type.
+
+#### Power-of-two capacities
+
+If `N` is a power of two, wrapping an index is a bitwise AND instead of a division. We can enforce that at compile time with an associated constant that fails to evaluate for other sizes:
+
+```rust {3}
+impl<T, const N: usize> Ring<T, N> {
+    const MASK: usize = {
+        assert!(N.is_power_of_two(), "capacity must be a power of two");
+        N - 1
+    };
+}
+```
+
+#### Free-running indices
+
+Instead of wrapping `head` and `tail` on every operation, we let them count up forever and mask them only when indexing. The number of elements is then simply `tail - head` with wrapping subtraction, and "full" and "empty" are no longer ambiguous.
+
+### Implementing push and pop
+
+With the representation fixed, the operations are short:
+
+```rust
+pub fn push(&mut self, value: T) -> Result<(), T> {
+    if self.tail.wrapping_sub(self.head) == N {
+        return Err(value);
+    }
+    self.buf[self.tail & Self::MASK].write(value);
+    self.tail = self.tail.wrapping_add(1);
+    Ok(())
+}
+
+pub fn pop(&mut self) -> Option<T> {
+    if self.head == self.tail {
+        return None;
+    }
+    let value = unsafe { self.buf[self.head & Self::MASK].assume_init_read() };
+    self.head = self.head.wrapping_add(1);
+    Some(value)
+}
+```
+
+#### Eliminating the bounds check
+
+Indexing with `self.tail & Self::MASK` produces a value that is always less than `N`. The optimizer can prove that, because `MASK` is a constant `N - 1` and `N` is a power of two, so the bounds check disappears from the generated code. You can confirm this in Compiler Explorer: the hot path is a compare, a store and an add.
+
+#### The `unsafe` contract
+
+`assume_init_read` is only sound because the `head != tail` check guarantees the slot was written by an earlier `push`. Keep `unsafe` blocks this small, and write the invariant they rely on in a comment next to them.
+
+### Dropping remaining elements
+
+Because slots are `MaybeUninit`, the compiler doesn't know which of them hold live values. We have to drop them ourselves:
+
+```rust
+impl<T, const N: usize> Drop for Ring<T, N> {
+    fn drop(&mut self) {
+        while self.pop().is_some() {}
+    }
+}
+```
+
+For types without a destructor, such as `u64`, the loop body does nothing, and the optimizer removes the loop entirely.
+
+### Making it concurrent
+
+A single-producer, single-consumer queue needs only two changes: the indices become atomics, and each side owns one of them.
+
+#### Splitting producer and consumer
+
+Splitting the ring into a `Producer` and a `Consumer` handle, each holding a shared reference to the inner buffer, lets the type system enforce "single" producer and "single" consumer. Neither handle is `Clone`.
+
+#### Choosing memory orderings
+
+The producer writes the slot, then publishes the new `tail` with a *release* store. The consumer reads `tail` with an *acquire* load before reading the slot. That pairing guarantees the consumer sees the slot's contents. Each side reads its own index with `Relaxed` ordering, because only it ever writes that index.
+
+#### Avoiding false sharing
+
+`head` and `tail` are written by different threads. If they share a cache line, every push invalidates the consumer's cache and vice versa. Aligning each index to its own 64-byte line removed most of the contention in our benchmarks.
+
+### Measuring the result
+
+We compared three versions, passing 100 million `u64` values between two threads on an 8-core desktop:
+
+| Version | Throughput | Notes |
+| --- | --- | --- |
+| `std::sync::mpsc` channel | ~45 M msg/s | General-purpose, allocates per block |
+| Ring with shared index line | ~110 M msg/s | False sharing between cores |
+| Ring with padded indices | ~290 M msg/s | Matches a hand-written C version |
+
+The abstraction — const-generic capacity, type-split handles, a safe API over `MaybeUninit` — costs nothing compared with the C version. The big win came from a hardware detail, cache-line padding, that has nothing to do with the language.
+
+### Lessons from the case study
+
+- Put invariants in the type system (capacity, power-of-two, single producer) so they cost nothing at runtime.
+- Keep `unsafe` small and next to the check that makes it sound.
+- Read the assembly for the hot path, and benchmark the whole system, because the hardware will surprise you.
+
+## Further reading
+
+### Books
+
+- *The Rust Programming Language*, chapters on ownership and generics.
+- *The Rustonomicon*, for `unsafe`, layout and drop semantics.
+
+### Talks and articles
+
+- Chandler Carruth's talks on what optimizers can and can't see through.
+- The Rust Performance Book, for profiling and benchmarking workflows.
+
+### Tools
+
+- Compiler Explorer for reading generated code.
+- `cargo asm` and `cargo-show-asm` for inspecting functions in your own crate.
+- `criterion` and `divan` for statistically sound benchmarks.
+
+## Takeaways
+
+- Zero-cost is a property of generated code, so verify it in generated code.
+- Give the optimizer concrete types and visible bodies, and it will remove your scaffolding.
+- Budget for the costs that remain: compile time, binary size and debug performance.
