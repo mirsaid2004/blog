@@ -1,127 +1,21 @@
+import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
+import { formatCompact, formatDate } from "@/lib/content/format";
+import { contentHref } from "@/lib/content/links";
+import { getArticles, getPosts } from "@/lib/content/queries";
 import BlogCard from "./BlogCard";
-import Link from "next/link";
 
-const LATEST_BLOGS = [
-    {
-        title: "Architecting Zero-Cost Abstractions in Systems Languages",
-        description: "How to leverage modern compiler intrinsics to build safer APIs without the runtime overhead costs usually associated with abstractions.",
-        date: "NOV 24, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "12 MIN",
-        categories: ["SYSTEMS", "ARCHITECTURE"],
-        rating: 4.8,
-        reviews: 24,
-        views: "1.2K",
-        slug: "zero-cost-abstractions-1",
-    },
-    {
-        title: "Mastering Distributed Transactions with the Saga Pattern",
-        description: "A deep dive into choreographing advanced distributed microservice transactions.",
-        date: "NOV 28, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "15 MIN",
-        categories: ["SYSTEMS", "ARCHITECTURE"],
-        rating: 4.8,
-        reviews: 24,
-        views: "1.2K",
-        slug: "zero-cost-abstractions-2",
-    },
-    {
-        title: "Scaling Beyond 10 Million Concurrent Connections",
-        description: "Part 3: Exploring the nuances of eBPF and kernel-bypass networking for extreme scale in high-performance networking services.",
-        date: "DEC 02, 2023",
-        image: "/series-placeholder.svg",
-        type: "SERIES",
-        readTime: "45 MIN",
-        categories: ["SCALING", "NETWORKING"],
-        rating: 4.9,
-        reviews: 89,
-        views: "4.5K",
-        slug: "scaling-10-million-connections-1",
-    },
-    {
-        title: "Writing High-Performance Interpreters in Zig",
-        description: "How to leverage modern compiler intrinsics to build safer APIs without the runtime overhead costs.",
-        date: "NOV 24, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "12 MIN",
-        categories: ["SYSTEMS", "ARCHITECTURE"],
-        rating: 4.8,
-        reviews: 24,
-        views: "1.2K",
-        slug: "zero-cost-abstractions-3",
-    },
-    {
-        title: "Building Real-Time Data Pipelines with Kafka",
-        description: "How to leverage modern compiler intrinsics to build safer APIs without the runtime overhead costs usually associated with abstractions.",
-        date: "NOV 24, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "12 MIN",
-        categories: ["SYSTEMS", "ARCHITECTURE"],
-        rating: 4.8,
-        reviews: 24,
-        views: "1.2K",
-        slug: "zero-cost-abstractions-4",
-    },
-    {
-        title: "Scaling Beyond 10 Million Concurrent Connections",
-        description: "Part 3: Exploring the nuances of eBPF and kernel-bypass networking for extreme scale in high-performance networking services.",
-        date: "DEC 02, 2023",
-        image: "/series-placeholder.svg",
-        type: "SERIES",
-        readTime: "45 MIN",
-        categories: ["SCALING", "NETWORKING"],
-        rating: 4.9,
-        reviews: 89,
-        views: "4.5K",
-        slug: "scaling-10-million-connections-2",
-    },
-    {
-        title: "Architecting Zero-Cost Abstractions in Systems Languages",
-        description: "How to leverage modern compiler intrinsics to build safer APIs without the runtime overhead costs usually associated with abstractions.",
-        date: "NOV 24, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "12 MIN",
-        categories: ["SYSTEMS", "ARCHITECTURE"],
-        rating: 4.8,
-        reviews: 24,
-        views: "1.2K",
-        slug: "zero-cost-abstractions-5",
-    },
-    {
-        title: "Architecting Zero-Cost Abstractions in Systems Languages",
-        description: "How to leverage modern compiler intrinsics to build safer APIs without the runtime overhead costs usually associated with abstractions.",
-        date: "NOV 24, 2023",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s",
-        type: "ARTICLE",
-        readTime: "12 MIN",
-        categories: ["SYSTEMS", "ARCHITECTURE"],
-        rating: 4.8,
-        reviews: 24,
-        views: "1.2K",
-        slug: "zero-cost-abstractions-6",
-    },
-    {
-        title: "Scaling Beyond 10 Million Concurrent Connections",
-        description: "Part 3: Exploring the nuances of eBPF and kernel-bypass networking for extreme scale in high-performance networking services.",
-        date: "DEC 02, 2023",
-        image: "/series-placeholder.svg",
-        type: "SERIES",
-        readTime: "45 MIN",
-        categories: ["SCALING", "NETWORKING"],
-        rating: 4.9,
-        reviews: 89,
-        views: "4.5K",
-        slug: "scaling-10-million-connections-3",
-    },
-];
+const LATEST_COUNT = 9;
+const FALLBACK_COVER = "/series-placeholder.svg";
 
 export default function LatestBlogs() {
+    const locale = useLocale();
+    const common = useTranslations("Archive.common");
+
+    const latest = [...getArticles(), ...getPosts()]
+        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+        .slice(0, LATEST_COUNT);
+
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-8">
@@ -129,15 +23,28 @@ export default function LatestBlogs() {
                     Latest Blogs
                 </h2>
                 <Link
-                    href="/blog"
+                    href="/articles"
                     className="text-primary text-sm font-medium hover:underline underline-offset-4 decoration-primary/50"
                 >
                     View All
                 </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {LATEST_BLOGS.map((blog) => (
-                    <BlogCard key={blog.slug} {...blog} />
+                {latest.map((item) => (
+                    <BlogCard
+                        key={item.id}
+                        href={contentHref(item)}
+                        title={item.title}
+                        description={item.summary}
+                        date={formatDate(item.publishedAt, locale)}
+                        image={item.cover ?? FALLBACK_COVER}
+                        type={item.type === "article" ? common("typeArticle") : common("typePost")}
+                        readTime={common("minRead", { minutes: item.readMinutes })}
+                        categories={item.tags}
+                        rating={item.rating}
+                        reviews={item.ratingCount}
+                        views={formatCompact(item.views, locale)}
+                    />
                 ))}
             </div>
         </div>

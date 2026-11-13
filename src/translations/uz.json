@@ -3,10 +3,7 @@
     "home": "bosh sahifa",
     "articles": "maqolalar",
     "posts": "postlar",
-    "series": "seriyalar",
-    "about": "Men haqimda",
-    "work": "Ishlar",
-    "contact": "Aloqa"
+    "series": "seriyalar"
   },
   "Footer": {
     "brandName": "M_DEV",
@@ -16,7 +13,6 @@
     "resources": {
       "npmPackages": "NPM paketlari",
       "github": "GitHub",
-      "blog": "Blog",
       "resume": "Rezyume"
     },
     "copyright": "M_DEV. Yaratilgan:",
