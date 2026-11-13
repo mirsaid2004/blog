@@ -93,5 +93,29 @@
       "startCta": "Начать серию",
       "viewCta": "Открыть серию"
     }
+  },
+  "Article": {
+    "onThisPage": "На этой странице",
+    "backToArticles": "Все статьи",
+    "bodyMissing": "Полный текст этой статьи скоро появится.",
+    "fallbackNotice": "Эта статья пока недоступна на вашем языке, поэтому показана на английском."
+  },
+  "Post": {
+    "onThisPage": "На этой странице",
+    "backToPosts": "Все посты",
+    "bodyMissing": "Полный текст этого поста скоро появится.",
+    "fallbackNotice": "Этот пост пока недоступен на вашем языке, поэтому показан на английском."
+  },
+  "SeriesNav": {
+    "label": "Серия: {title}",
+    "partOf": "Часть {current} из {total}",
+    "previous": "Назад",
+    "next": "Далее",
+    "finished": "Конец серии",
+    "backToSeries": "Вернуться к обзору серии"
+  },
+  "SeriesDetail": {
+    "backToSeries": "Все серии",
+    "readingOrder": "Порядок чтения"
   }
 }

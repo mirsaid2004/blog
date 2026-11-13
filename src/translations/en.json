@@ -93,5 +93,29 @@
       "startCta": "Start the series",
       "viewCta": "View series"
     }
+  },
+  "Article": {
+    "onThisPage": "On this page",
+    "backToArticles": "All articles",
+    "bodyMissing": "The full text of this article is on its way.",
+    "fallbackNotice": "This article isn't available in your language yet, so it's shown in English."
+  },
+  "Post": {
+    "onThisPage": "On this page",
+    "backToPosts": "All posts",
+    "bodyMissing": "The full text of this post is on its way.",
+    "fallbackNotice": "This post isn't available in your language yet, so it's shown in English."
+  },
+  "SeriesNav": {
+    "label": "Series: {title}",
+    "partOf": "Part {current} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "finished": "End of the series",
+    "backToSeries": "Back to the series overview"
+  },
+  "SeriesDetail": {
+    "backToSeries": "All series",
+    "readingOrder": "Reading order"
   }
 }

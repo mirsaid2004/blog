@@ -1,7 +1,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Layers } from "lucide-react";
 import { Link } from "@/i18n/routing";
-import type { ContentItem, SeriesWithItems } from "@/lib/content/types";
+import { contentHref } from "@/lib/content/links";
+import type { SeriesWithItems } from "@/lib/content/types";
 import { formatDate } from "@/lib/content/format";
 import { cn } from "@/lib/utils";
 import ContentMeta from "./ContentMeta";
@@ -10,11 +11,6 @@ import TagList from "./TagList";
 import { GlareSurface } from "./effects/Surfaces";
 
 const PREVIEW_PARTS = 3;
-
-function partHref(part: ContentItem, seriesSlug: string) {
-  const base = part.type === "article" ? "/articles" : "/posts";
-  return `${base}/${part.slug}?series=${seriesSlug}`;
-}
 
 export default function SeriesCollectionCard({ series }: { series: SeriesWithItems }) {
   const t = useTranslations("Archive.series");
@@ -68,7 +64,7 @@ export default function SeriesCollectionCard({ series }: { series: SeriesWithIte
           {preview.map((part, index) => (
             <li key={part.id}>
               <Link
-                href={partHref(part, series.slug)}
+                href={contentHref(part, series.slug)}
                 className="group/part flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-card"
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card text-xs font-bold tabular-nums text-foreground">
@@ -109,7 +105,7 @@ export default function SeriesCollectionCard({ series }: { series: SeriesWithIte
             </Link>
             {first && (
               <Link
-                href={partHref(first, series.slug)}
+                href={contentHref(first, series.slug)}
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
                 {t("startCta")}
