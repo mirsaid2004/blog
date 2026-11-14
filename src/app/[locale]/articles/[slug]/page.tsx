@@ -37,13 +37,11 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
   return (
     <ContentDetail
       item={article}
-      locale={locale}
       seriesContext={seriesContext}
       labels={{
         back: t("backToArticles"),
         onThisPage: t("onThisPage"),
         bodyMissing: t("bodyMissing"),
-        fallbackNotice: t("fallbackNotice"),
       }}
     />
   );

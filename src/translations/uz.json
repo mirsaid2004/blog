@@ -93,14 +93,12 @@
   "Article": {
     "onThisPage": "Ushbu sahifada",
     "backToArticles": "Barcha maqolalar",
-    "bodyMissing": "Ushbu maqolaning to'liq matni tez orada qo'shiladi.",
-    "fallbackNotice": "Bu maqola hali sizning tilingizda mavjud emas, shuning uchun ingliz tilida ko'rsatilmoqda."
+    "bodyMissing": "Ushbu maqolaning to'liq matni tez orada qo'shiladi."
   },
   "Post": {
     "onThisPage": "Ushbu sahifada",
     "backToPosts": "Barcha postlar",
-    "bodyMissing": "Ushbu postning to'liq matni tez orada qo'shiladi.",
-    "fallbackNotice": "Bu post hali sizning tilingizda mavjud emas, shuning uchun ingliz tilida ko'rsatilmoqda."
+    "bodyMissing": "Ushbu postning to'liq matni tez orada qo'shiladi."
   },
   "SeriesNav": {
     "label": "Seriya: {title}",
@@ -113,5 +111,12 @@
   "SeriesDetail": {
     "backToSeries": "Barcha seriyalar",
     "readingOrder": "O'qish tartibi"
+  },
+  "Translation": {
+    "fallback": "{type, select, article {Bu maqola} post {Bu post} other {Bu seriya}} hali {requested, select, en {ingliz} ru {rus} other {o'zbek}} tilida mavjud emas. Siz {shown, select, en {inglizcha} ru {ruscha} other {o'zbekcha}} versiyasini o'qiyapsiz.",
+    "comingSoon": "{requested, select, en {Inglizcha} ru {Ruscha} other {O'zbekcha}} tarjimasi tez orada chiqadi.",
+    "readIn": "O'qish tili:",
+    "alsoIn": "Boshqa tillarda:",
+    "availableIn": "Mavjud tillar: {languages}"
   }
 }

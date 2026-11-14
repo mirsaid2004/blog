@@ -93,14 +93,12 @@
   "Article": {
     "onThisPage": "On this page",
     "backToArticles": "All articles",
-    "bodyMissing": "The full text of this article is on its way.",
-    "fallbackNotice": "This article isn't available in your language yet, so it's shown in English."
+    "bodyMissing": "The full text of this article is on its way."
   },
   "Post": {
     "onThisPage": "On this page",
     "backToPosts": "All posts",
-    "bodyMissing": "The full text of this post is on its way.",
-    "fallbackNotice": "This post isn't available in your language yet, so it's shown in English."
+    "bodyMissing": "The full text of this post is on its way."
   },
   "SeriesNav": {
     "label": "Series: {title}",
@@ -113,5 +111,12 @@
   "SeriesDetail": {
     "backToSeries": "All series",
     "readingOrder": "Reading order"
+  },
+  "Translation": {
+    "fallback": "{type, select, article {This article} post {This post} other {This series}} isn't available in {requested, select, en {English} ru {Russian} other {Uzbek}} yet. You're reading the {shown, select, en {English} ru {Russian} other {Uzbek}} version.",
+    "comingSoon": "The {requested, select, en {English} ru {Russian} other {Uzbek}} translation is coming soon.",
+    "readIn": "Read in:",
+    "alsoIn": "Also in:",
+    "availableIn": "Available in {languages}"
   }
 }

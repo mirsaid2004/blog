@@ -1,5 +1,7 @@
 import React from 'react';
+import type { Locale } from 'next-intl';
 import { LucideIcon } from 'lucide-react';
+import LanguageBadge from '@/components/archive/LanguageBadge';
 import { Link } from '@/i18n/routing';
 import style from './SeriesCard.module.css';
 
@@ -13,9 +15,13 @@ export interface SeriesCardProps {
     images: string[];
     // Optionally pass a link to navigate
     href?: string;
+    /** Language the title and description are in. */
+    lang: Locale;
+    /** Languages the series is published in; shown as a badge when the reader's is missing. */
+    languages: Locale[];
 }
 
-export default function SeriesCard({ title, description, date, parts, categories, icons, images, href }: SeriesCardProps) {
+export default function SeriesCard({ title, description, date, parts, categories, icons, images, href, lang, languages }: SeriesCardProps) {
     // Only map over the first 4 images to limit the stack size
     const displayImages = images.slice(0, 4);
 
@@ -65,13 +71,14 @@ export default function SeriesCard({ title, description, date, parts, categories
                             </span>
                         </>
                     )}
+                    <LanguageBadge languages={languages} />
                 </div>
 
-                <h3 className="text-sm font-bold text-foreground mb-1.5 leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                <h3 lang={lang} className="text-sm font-bold text-foreground mb-1.5 leading-snug group-hover:text-primary transition-colors line-clamp-2">
                     {title}
                 </h3>
 
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
+                <p lang={lang} className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
                     {description}
                 </p>
 

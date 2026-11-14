@@ -1,10 +1,10 @@
-import type { Locale } from "next-intl";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import BlurText from "@/components/react-bits/BlurText";
 import ContentMeta from "@/components/archive/ContentMeta";
 import Cover from "@/components/archive/Cover";
 import TagList from "@/components/archive/TagList";
+import { contentHref } from "@/lib/content/links";
 import { getContentBody } from "@/lib/content/mdx";
 import type { SeriesContext } from "@/lib/content/queries";
 import type { ContentItem } from "@/lib/content/types";
@@ -13,18 +13,17 @@ import MobileToc from "./MobileToc";
 import TableOfContents from "./TableOfContents";
 import { mdxComponents } from "./mdx-components";
 import { SeriesBanner, SeriesPager } from "./SeriesNav";
+import { OtherLanguages, TranslationNotice } from "./TranslationNotice";
 
 interface ContentDetailProps {
+  /** Resolved for the reader's locale; `item.locale` is the language it's shown in. */
   item: ContentItem;
-  /** The reader's locale; the item may be shown in another language (`item.locale`). */
-  locale: Locale;
   /** Set when the piece was opened from a series (`?series=`). */
   seriesContext: SeriesContext | null;
   labels: {
     back: string;
     onThisPage: string;
     bodyMissing: string;
-    fallbackNotice: string;
   };
 }
 
@@ -32,10 +31,12 @@ interface ContentDetailProps {
  * Shared layout for article and post detail pages: header, MDX body and the
  * "On this page" rail. Articles show their cover; posts are text-first.
  */
-export default async function ContentDetail({ item, locale, seriesContext, labels }: ContentDetailProps) {
+export default async function ContentDetail({ item, seriesContext, labels }: ContentDetailProps) {
   const body = await getContentBody(item.type, item.slug, item.locale, mdxComponents);
   const toc = body?.toc ?? [];
   const isArticle = item.type === "article";
+  // This page's own path, so language links keep the reader in the same series.
+  const selfHref = contentHref(item, seriesContext?.series.slug);
   const backHref = seriesContext ? `/series/${seriesContext.series.slug}` : isArticle ? "/articles" : "/posts";
 
   return (
@@ -58,8 +59,10 @@ export default async function ContentDetail({ item, locale, seriesContext, label
             <TagList tags={item.tags} className="mt-8" />
 
             {/* BlurText renders a <p>; keep a real <h1> for document structure and assistive tech. */}
-            <h1 className="sr-only">{item.title}</h1>
-            <div aria-hidden>
+            <h1 className="sr-only" lang={item.locale}>
+              {item.title}
+            </h1>
+            <div aria-hidden lang={item.locale}>
               <BlurText
                 text={item.title}
                 animateBy="words"
@@ -73,18 +76,24 @@ export default async function ContentDetail({ item, locale, seriesContext, label
               />
             </div>
 
-            <p className="mt-5 text-lg leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-300 duration-700">
+            <p
+              lang={item.locale}
+              className="mt-5 text-lg leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-300 duration-700"
+            >
               {item.summary}
             </p>
 
-            <ContentMeta
-              publishedAt={item.publishedAt}
-              readMinutes={item.readMinutes}
-              views={item.views}
-              rating={item.rating}
-              ratingCount={item.ratingCount}
-              className={cn("mt-6 text-sm", !isArticle && "border-b border-border pb-8")}
-            />
+            <div className={cn("mt-6", !isArticle && "border-b border-border pb-8")}>
+              <ContentMeta
+                publishedAt={item.publishedAt}
+                readMinutes={item.readMinutes}
+                views={item.views}
+                rating={item.rating}
+                ratingCount={item.ratingCount}
+                className="text-sm"
+              />
+              <OtherLanguages localized={item} href={selfHref} className="mt-4" />
+            </div>
 
             {isArticle && (
               <Cover
@@ -97,14 +106,9 @@ export default async function ContentDetail({ item, locale, seriesContext, label
             )}
           </header>
 
-          <MobileToc items={toc} title={labels.onThisPage} />
+          <TranslationNotice kind={item.type} localized={item} href={selfHref} className="mb-8" />
 
-          {item.locale !== locale && (
-            <p className="mb-8 flex items-start gap-2 rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-              <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              {labels.fallbackNotice}
-            </p>
-          )}
+          <MobileToc items={toc} title={labels.onThisPage} />
 
           {body ? (
             <div className="article-body" lang={item.locale}>

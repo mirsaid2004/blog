@@ -3,6 +3,7 @@ import { Link } from "@/i18n/routing";
 import type { ContentItem } from "@/lib/content/types";
 import { formatDate, formatMonth } from "@/lib/content/format";
 import ContentMeta from "./ContentMeta";
+import LanguageBadge from "./LanguageBadge";
 import TagList from "./TagList";
 import { SpotlightSurface } from "./effects/Surfaces";
 
@@ -66,14 +67,15 @@ function PostRow({ post }: { post: ContentItem }) {
         {formatDate(post.publishedAt, locale)}
       </time>
       <div className="min-w-0">
-        <h3 className="text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+        <h3 lang={post.locale} className="text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
           <Link href={`/posts/${post.slug}`} className="after:absolute after:inset-0">
             {post.title}
           </Link>
         </h3>
-        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{post.summary}</p>
+        <p lang={post.locale} className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{post.summary}</p>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <TagList tags={post.tags} />
+          <LanguageBadge languages={post.languages} />
           <ContentMeta
             readMinutes={post.readMinutes}
             views={post.views}

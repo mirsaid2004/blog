@@ -34,6 +34,8 @@ export default function LatestBlogs() {
                     <BlogCard
                         key={item.id}
                         href={contentHref(item)}
+                        lang={item.locale}
+                        languages={item.languages}
                         title={item.title}
                         description={item.summary}
                         date={formatDate(item.publishedAt, locale)}

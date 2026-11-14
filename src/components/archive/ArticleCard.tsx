@@ -2,6 +2,7 @@ import { Link } from "@/i18n/routing";
 import type { ContentItem } from "@/lib/content/types";
 import ContentMeta from "./ContentMeta";
 import Cover from "./Cover";
+import LanguageBadge from "./LanguageBadge";
 import TagList from "./TagList";
 import { SpotlightSurface } from "./effects/Surfaces";
 
@@ -15,13 +16,16 @@ export default function ArticleCard({ article }: { article: ContentItem }) {
           className="aspect-16/9"
         />
         <div className="flex flex-1 flex-col p-5">
-          <TagList tags={article.tags} />
-          <h3 className="mt-2 text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+          <div className="flex flex-wrap items-center gap-2">
+            <TagList tags={article.tags} />
+            <LanguageBadge languages={article.languages} />
+          </div>
+          <h3 lang={article.locale} className="mt-2 text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
             <Link href={`/articles/${article.slug}`} className="after:absolute after:inset-0">
               {article.title}
             </Link>
           </h3>
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+          <p lang={article.locale} className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
             {article.summary}
           </p>
           <ContentMeta

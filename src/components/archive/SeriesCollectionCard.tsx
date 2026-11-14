@@ -6,6 +6,7 @@ import type { SeriesWithItems } from "@/lib/content/types";
 import { formatDate } from "@/lib/content/format";
 import { cn } from "@/lib/utils";
 import ContentMeta from "./ContentMeta";
+import LanguageBadge from "./LanguageBadge";
 import Cover from "./Cover";
 import TagList from "./TagList";
 import { GlareSurface } from "./effects/Surfaces";
@@ -44,13 +45,18 @@ export default function SeriesCollectionCard({ series }: { series: SeriesWithIte
       </div>
 
       <div className="flex flex-1 flex-col p-6">
-        <TagList tags={series.tags} />
-        <h3 className="mt-2 text-xl font-extrabold leading-snug tracking-tight text-foreground">
+        <div className="flex flex-wrap items-center gap-2">
+          <TagList tags={series.tags} />
+          <LanguageBadge languages={series.languages} />
+        </div>
+        <h3 lang={series.locale} className="mt-2 text-xl font-extrabold leading-snug tracking-tight text-foreground">
           <Link href={`/series/${series.slug}`} className="transition-colors hover:text-primary">
             {series.title}
           </Link>
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{series.summary}</p>
+        <p lang={series.locale} className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          {series.summary}
+        </p>
 
         <p className="mt-4 text-xs font-semibold text-foreground/80">
           {[...composition, common("readingTime", { minutes: series.readMinutes })].join(" · ")}
@@ -70,7 +76,7 @@ export default function SeriesCollectionCard({ series }: { series: SeriesWithIte
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card text-xs font-bold tabular-nums text-foreground">
                   {index + 1}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground group-hover/part:text-primary">
+                <span lang={part.locale} className="min-w-0 flex-1 truncate text-sm font-medium text-foreground group-hover/part:text-primary">
                   {part.title}
                 </span>
                 <span
