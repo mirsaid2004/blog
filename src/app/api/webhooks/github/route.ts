@@ -10,8 +10,6 @@ import { BRANCH, syncContent } from "@/lib/content/sync";
  * (X-Hub-Signature-256), so unsigned or forged requests are rejected.
  */
 
-export const maxDuration = 60;
-
 export async function POST(request: Request) {
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
   if (!secret) return Response.json({ error: "GITHUB_WEBHOOK_SECRET is not set" }, { status: 500 });

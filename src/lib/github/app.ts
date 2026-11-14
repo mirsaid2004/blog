@@ -20,6 +20,15 @@ export function contentRepo(): { owner: string; repo: string } {
   return { owner, repo };
 }
 
+/**
+ * The PEM key. `.env` stores it on one line with `\n` escapes, which Next turns
+ * into newlines; a host's env UI (Netlify) may pass the escapes through
+ * literally, so convert them here too. A key pasted with real newlines works as is.
+ */
+function privateKey(): string {
+  return required("GITHUB_APP_PRIVATE_KEY").replace(/\\n/g, "\n");
+}
+
 let client: Octokit | undefined;
 
 /** Octokit authenticated as the app's installation on the content repo. */
@@ -28,7 +37,7 @@ export function contentOctokit(): Octokit {
     authStrategy: createAppAuth,
     auth: {
       appId: required("GITHUB_APP_ID"),
-      privateKey: required("GITHUB_APP_PRIVATE_KEY"),
+      privateKey: privateKey(),
       installationId: required("GITHUB_APP_INSTALLATION_ID"),
     },
     userAgent: "mdev-blog",
@@ -39,7 +48,7 @@ export function contentOctokit(): Octokit {
 export function appOctokit(): Octokit {
   return new Octokit({
     authStrategy: createAppAuth,
-    auth: { appId: required("GITHUB_APP_ID"), privateKey: required("GITHUB_APP_PRIVATE_KEY") },
+    auth: { appId: required("GITHUB_APP_ID"), privateKey: privateKey() },
     userAgent: "mdev-blog",
   });
 }

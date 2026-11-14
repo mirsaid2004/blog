@@ -9,7 +9,7 @@ import ArchiveToolbar from "@/components/archive/ArchiveToolbar";
 import ArchiveBackdrop from "@/components/archive/effects/ArchiveBackdrop";
 import EmptyState from "@/components/archive/EmptyState";
 import PostList from "@/components/archive/PostList";
-import { applyFilters, getPosts, parseFilters, tagCounts } from "@/lib/content/queries";
+import { filterItems, getPosts, parseFilters, tagCounts } from "@/lib/content/queries";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
@@ -27,7 +27,7 @@ export default async function PostsPage({ params, searchParams }: PageProps) {
   const filters = parseFilters(await searchParams);
   const { locale } = await params;
   const all = await getPosts(locale);
-  const results = applyFilters(all, filters);
+  const results = await filterItems(all, filters, locale);
   const minutes = all.reduce((sum, p) => sum + p.readMinutes, 0);
   const views = all.reduce((sum, p) => sum + p.views, 0);
 

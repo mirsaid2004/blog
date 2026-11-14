@@ -323,7 +323,7 @@ Skip anything younger than 24 hours, so an in-flight upload is never deleted.
 #### Rendering
 
 - Add `img.<domain>` to `images.remotePatterns` in `next.config.ts`.
-- To avoid Vercel's image-optimization quota, use a custom `next/image` loader backed by Cloudflare Image Transformations, or serve the client-resized files with `unoptimized`. Check Cloudflare's free tier for transformations.
+- To avoid image-optimization limits on the host, use a custom `next/image` loader backed by Cloudflare Image Transformations, or serve the client-resized files with `unoptimized`. Check Cloudflare's free tier for transformations.
 
 #### Tradeoffs
 
@@ -448,7 +448,7 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 - [ ] **Post versus article.** If a post is a short note with no cover or table of contents, keep one `content` table with a `type` column.
 - [ ] **Publish merge style.** A merge commit keeps the full draft history reachable from `main` (recommended, since you want searchable history). A squash merge keeps `main` cleaner but leaves the history only on the draft branch. It also changes which images count as published (see [2.3](#23-media-cloudflare-r2)).
 - [ ] **Image domain.** Pick the R2 custom domain, for example `img.<your-domain>`.
-- [ ] **Hosting.** Vercel is the natural fit for ISR, `revalidateTag` and cron jobs. If you self-host, revalidation and cron need extra setup.
+- [x] **Hosting.** Decided: Netlify. Its Next.js runtime handles ISR and `revalidateTag`; the daily job is a Netlify Scheduled Function that calls `/api/cron/daily`.
 
 ---
 
@@ -466,7 +466,7 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 | Database | Neon Postgres + Drizzle ORM (users, ratings, views, published index, assets) |
 | Editor | CodeMirror 6 + live MDX preview |
 | Media | Cloudflare R2: `mdev-blog` (public, custom domain) and `mdev-blog-private` (private); content-hashed immutable keys; `asset` table for cleanup |
-| Hosting | Vercel |
+| Hosting | Netlify (Next.js runtime, Scheduled Functions) |
 
 ---
 

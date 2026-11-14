@@ -11,7 +11,7 @@ import ArticleCard from "@/components/archive/ArticleCard";
 import EmptyState from "@/components/archive/EmptyState";
 import Reveal from "@/components/archive/Reveal";
 import FeaturedArticle from "@/components/archive/FeaturedArticle";
-import { applyFilters, getArticles, hasActiveFilters, parseFilters, tagCounts } from "@/lib/content/queries";
+import { filterItems, getArticles, hasActiveFilters, parseFilters, tagCounts } from "@/lib/content/queries";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
@@ -29,7 +29,7 @@ export default async function ArticlesPage({ params, searchParams }: PageProps) 
   const filters = parseFilters(await searchParams);
   const { locale } = await params;
   const all = await getArticles(locale);
-  const results = applyFilters(all, filters);
+  const results = await filterItems(all, filters, locale);
 
   // Feature the newest article only on the unfiltered view, where "newest" is meaningful.
   const showFeatured = !hasActiveFilters(filters) && results.length > 1;

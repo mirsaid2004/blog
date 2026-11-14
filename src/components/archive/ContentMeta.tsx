@@ -2,6 +2,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Clock, Eye, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCompact, formatDate, formatRating } from "@/lib/content/format";
+import { MIN_RATINGS } from "@/lib/content/types";
 
 interface ContentMetaProps {
   publishedAt?: string;
@@ -50,12 +51,15 @@ export default function ContentMeta({
           <span className="sr-only">{t("views", { count: formatCompact(views, locale) })}</span>
         </span>
       </li>
-      <li className="flex items-center gap-1" title={t("ratings", { rating: ratingText, count: ratingCount })}>
-        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden />
-        <span className="text-foreground/80">{ratingText}</span>
-        <span className="sr-only">{t("ratings", { rating: ratingText, count: ratingCount })}</span>
-        <span aria-hidden>({formatCompact(ratingCount, locale)})</span>
-      </li>
+      {/* An average of one or two ratings says little, so it's shown from MIN_RATINGS on. */}
+      {ratingCount >= MIN_RATINGS && (
+        <li className="flex items-center gap-1" title={t("ratings", { rating: ratingText, count: ratingCount })}>
+          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden />
+          <span className="text-foreground/80">{ratingText}</span>
+          <span className="sr-only">{t("ratings", { rating: ratingText, count: ratingCount })}</span>
+          <span aria-hidden>({formatCompact(ratingCount, locale)})</span>
+        </li>
+      )}
     </ul>
   );
 }

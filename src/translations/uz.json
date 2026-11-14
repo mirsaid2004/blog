@@ -148,5 +148,23 @@
     "syncing": "Sinxronlanmoqda…",
     "synced": "{items} ta yozuv sinxronlandi ({downloaded} ta fayl yuklandi, {removed} ta o'chirildi).",
     "syncFailed": "Sinxronlashda xato: {message}"
+  },
+  "Engagement": {
+    "rateTitle": "{kind, select, article {Maqolani} post {Postni} other {Seriyani}} baholang",
+    "average": "O'rtacha baho {rating} ({count} ta baho)",
+    "notEnough": "{count, plural, =0 {Hali baho yo'q} other {Hozircha # ta baho}}",
+    "starLabel": "{value} yulduz",
+    "yourRating": "Sizning bahoingiz: {value}/5. Olib tashlash uchun yana bosing.",
+    "hint": "Bahoingiz boshqa o'quvchilarga eng yaxshi materiallarni topishga yordam beradi.",
+    "signInToRate": "Baho berish uchun kiring.",
+    "error": "Bahoni saqlab bo'lmadi. Qaytadan urinib ko'ring."
+  },
+  "Home": {
+    "latest": "Yangilari",
+    "series": "Seriyalar",
+    "topPicks": "Eng yaxshilari",
+    "viewAll": "Barchasi",
+    "searchPlaceholder": "Maqola va postlarni qidirish…",
+    "resultsFor": "“{query}” bo'yicha natijalar"
   }
 }

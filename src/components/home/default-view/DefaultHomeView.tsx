@@ -3,7 +3,8 @@ import LatestBlogs from "./LatestBlogs";
 import Series from "./Series";
 import TopPicks from "./TopPicks";
 
-export default function DefaultHomeView() {
+/** `query` is the hero search (`?q=`); it turns the latest list into search results. */
+export default function DefaultHomeView({ query }: { query?: string }) {
     return (
         <section className="relative w-full">
             {/* Dot grid on its own layer so it can fade in under the hero instead of starting at a hard edge. */}
@@ -21,7 +22,7 @@ export default function DefaultHomeView() {
             <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 py-20 min-h-[200vh]">
                 <div id="default-home-view" className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                     <div className="lg:col-span-8 relative z-0">
-                        <LatestBlogs />
+                        <LatestBlogs query={query} />
                     </div>
                     <div id="top-picks-container" className="lg:col-span-4 h-full relative z-0">
                         {/* Sits directly below the docked search card; `top` now only

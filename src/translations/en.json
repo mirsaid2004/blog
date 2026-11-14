@@ -148,5 +148,23 @@
     "syncing": "Syncing…",
     "synced": "Synced {items} items ({downloaded} files downloaded, {removed} removed).",
     "syncFailed": "Sync failed: {message}"
+  },
+  "Engagement": {
+    "rateTitle": "Rate this {kind, select, article {article} post {post} other {series}}",
+    "average": "{rating} average from {count, plural, one {# rating} other {# ratings}}",
+    "notEnough": "{count, plural, =0 {No ratings yet} one {# rating so far} other {# ratings so far}}",
+    "starLabel": "{value, plural, one {# star} other {# stars}}",
+    "yourRating": "Your rating: {value}/5. Click it again to remove it.",
+    "hint": "Your rating helps other readers find the best pieces.",
+    "signInToRate": "Sign in to rate.",
+    "error": "Couldn't save your rating. Please try again."
+  },
+  "Home": {
+    "latest": "Latest",
+    "series": "Series",
+    "topPicks": "Top Picks",
+    "viewAll": "View all",
+    "searchPlaceholder": "Search articles and posts…",
+    "resultsFor": "Results for “{query}”"
   }
 }

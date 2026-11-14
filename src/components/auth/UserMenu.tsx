@@ -33,7 +33,7 @@ function useClickOutside(open: boolean, close: () => void) {
   return ref;
 }
 
-function SignInButtons({ className }: { className?: string }) {
+export function SignInButtons({ className }: { className?: string }) {
   const t = useTranslations("Auth");
   const [pending, setPending] = useState<Provider | null>(null);
 

@@ -37,6 +37,7 @@ function HeroFilterings() {
     const dockPoint = useDockPoint();
     const isDocked = useIsDocked();
     const t = useTranslations("Archive.common");
+    const home = useTranslations("Home");
     const { query, setQuery, isPending } = useUrlSearchQuery("q");
 
     const anchorRef = useRef<HTMLDivElement>(null);
@@ -168,7 +169,7 @@ function HeroFilterings() {
                         value={query}
                         onValueChange={setQuery}
                         pending={isPending}
-                        placeholder="Search for articles, architectures, or tools..."
+                        placeholder={home("searchPlaceholder")}
                         label={t("searchLabel")}
                         clearLabel={t("clearFilters")}
                         className="h-full"

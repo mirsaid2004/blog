@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
@@ -12,6 +13,8 @@ import LanguageBadge from "@/components/archive/LanguageBadge";
 import Reveal from "@/components/archive/Reveal";
 import TagList from "@/components/archive/TagList";
 import { OtherLanguages, TranslationNotice } from "@/components/article/TranslationNotice";
+import { ViewTracker } from "@/components/article/ViewTracker";
+import { RatingPanel } from "@/components/engagement/RatingPanel";
 import { formatDate } from "@/lib/content/format";
 import { contentHref } from "@/lib/content/links";
 import { getSeries, getSeriesBySlug } from "@/lib/content/queries";
@@ -181,7 +184,12 @@ export default async function SeriesDetailPage({ params }: PageProps) {
             ))}
           </ol>
         </section>
+
+        <Suspense fallback={null}>
+          <RatingPanel contentId={series.id} kind="series" average={series.rating} count={series.ratingCount} />
+        </Suspense>
       </div>
+      <ViewTracker id={series.id} locale={series.locale} />
     </main>
   );
 }

@@ -4,6 +4,9 @@ export type ContentType = "article" | "post";
 
 export type TranslationStatus = "draft" | "published";
 
+/** Show an average rating only once a piece has this many ratings. */
+export const MIN_RATINGS = 3;
+
 export interface ContentStats {
   views: number;
   rating: number;

@@ -104,9 +104,9 @@ the real site, and smee isn't involved.
 4. **`/api/webhooks/github`**: verifies the signature, ignores anything that
    isn't a push to `main` of the content repo, runs the sync, and revalidates the
    `content` cache tag so pages show the new version on their next visit.
-5. **Other ways to sync:** `npm run content:sync` (local), and
-   `/api/content/sync` with `Authorization: Bearer $CRON_SECRET`, which a daily
-   Vercel cron also calls in case a webhook was missed.
+5. **Other ways to sync:** `npm run content:sync` (local),
+   `/api/content/sync` with `Authorization: Bearer $CRON_SECRET` (by hand), and
+   the daily Netlify scheduled function (`/api/cron/daily`) in case a webhook was missed.
 6. **Offline:** `CONTENT_SOURCE=local` with `CONTENT_DIR` pointing at a clone
    of `blog-db` parses files directly, without Neon.
 

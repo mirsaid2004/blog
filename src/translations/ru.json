@@ -148,5 +148,23 @@
     "syncing": "Синхронизация…",
     "synced": "Синхронизировано записей: {items} (скачано файлов: {downloaded}, удалено: {removed}).",
     "syncFailed": "Ошибка синхронизации: {message}"
+  },
+  "Engagement": {
+    "rateTitle": "Оцените {kind, select, article {статью} post {пост} other {серию}}",
+    "average": "Средняя оценка {rating} ({count, plural, one {# оценка} few {# оценки} many {# оценок} other {# оценки}})",
+    "notEnough": "{count, plural, =0 {Оценок пока нет} one {Пока # оценка} few {Пока # оценки} many {Пока # оценок} other {Пока # оценки}}",
+    "starLabel": "{value, plural, one {# звезда} few {# звезды} many {# звёзд} other {# звезды}}",
+    "yourRating": "Ваша оценка: {value}/5. Нажмите ещё раз, чтобы убрать её.",
+    "hint": "Ваша оценка помогает другим читателям найти лучшие материалы.",
+    "signInToRate": "Войдите, чтобы поставить оценку.",
+    "error": "Не удалось сохранить оценку. Попробуйте ещё раз."
+  },
+  "Home": {
+    "latest": "Новое",
+    "series": "Серии",
+    "topPicks": "Лучшее",
+    "viewAll": "Смотреть все",
+    "searchPlaceholder": "Поиск статей и постов…",
+    "resultsFor": "Результаты по запросу «{query}»"
   }
 }

@@ -1,7 +1,9 @@
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 import {
   boolean,
   check,
+  customType,
+  date,
   index,
   integer,
   jsonb,
@@ -48,6 +50,16 @@ export const contentItems = pgTable(
   (t) => [uniqueIndex("content_items_kind_slug").on(t.kind, t.slug)]
 );
 
+const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" });
+
+/**
+ * Text-search configuration per language. Postgres has no Uzbek stemmer, so uz
+ * uses `simple` (lower-cased words, no stemming). Search queries must use the
+ * same expression so query words are stemmed like the indexed text.
+ */
+export const searchConfig = (locale: unknown) =>
+  sql`(case ${locale} when 'en' then 'english'::regconfig when 'ru' then 'russian'::regconfig else 'simple'::regconfig end)`;
+
 /** One row per language of an item (its <locale>.mdx). */
 export const contentTranslations = pgTable(
   "content_translations",
@@ -62,8 +74,15 @@ export const contentTranslations = pgTable(
     readMinutes: integer("read_minutes").notNull(),
     /** MDX without frontmatter. */
     body: text("body").notNull(),
+    /** Title (weight A), summary (B) and body (D), stemmed for the row's language. */
+    search: tsvector("search")
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`setweight(to_tsvector(${searchConfig(sql.raw('"locale"'))}, "title"), 'A') || setweight(to_tsvector(${searchConfig(sql.raw('"locale"'))}, "summary"), 'B') || setweight(to_tsvector(${searchConfig(sql.raw('"locale"'))}, "body"), 'D')`
+      ),
   },
-  (t) => [primaryKey({ columns: [t.itemId, t.locale] })]
+  (t) => [primaryKey({ columns: [t.itemId, t.locale] }), index("content_translations_search").using("gin", t.search)]
 );
 
 /** Result of the last sync: which commit is indexed and which files were rejected. */
@@ -141,4 +160,51 @@ export const verification = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("verification_identifier").on(t.identifier)]
+);
+
+// --- Engagement (PLAN.md 2.6) -------------------------------------------------------
+// Keyed by content id without a foreign key: views and ratings survive a piece
+// being briefly invalid or re-synced, and ids never change.
+
+/** Denormalised counters, read on every list. Ratings are recomputed from `rating` on each change. */
+export const contentStats = pgTable("content_stats", {
+  contentId: text("content_id").primaryKey(),
+  views: integer("views").notNull().default(0),
+  ratingSum: integer("rating_sum").notNull().default(0),
+  ratingCount: integer("rating_count").notNull().default(0),
+});
+
+/** One rating per reader per piece, whichever language they read it in. */
+export const rating = pgTable(
+  "rating",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    contentId: text("content_id").notNull(),
+    value: smallint("value").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.contentId] }),
+    index("rating_content_id").on(t.contentId),
+    check("rating_value_range", sql`${t.value} between 1 and 5`),
+  ]
+);
+
+/**
+ * One row per piece, visitor and day, so reloads don't count twice. The visitor
+ * hash is an HMAC of IP, user agent and day: no raw IPs are stored, and hashes
+ * can't be linked across days. Rows older than 90 days are pruned daily.
+ */
+export const viewEvent = pgTable(
+  "view_event",
+  {
+    contentId: text("content_id").notNull(),
+    visitorHash: text("visitor_hash").notNull(),
+    day: date("day").notNull(),
+    locale: text("locale").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.contentId, t.visitorHash, t.day] }), index("view_event_day").on(t.day)]
 );

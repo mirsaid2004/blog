@@ -1,73 +1,37 @@
-"use client";
+import { getLocale, getTranslations } from "next-intl/server";
+import { formatCompact, formatDate } from "@/lib/content/format";
+import { contentHref } from "@/lib/content/links";
+import { getTopPicks } from "@/lib/content/queries";
+import TopPicksList from "./TopPicksList";
 
-import TopPickItem from "./TopPickItem";
-import { cn } from "@/lib/utils";
-import { useIsDocked } from "../scroll-dock";
+const FALLBACK_COVER = "/series-placeholder.svg";
 
-const TOP_PICKS = [
-    {
-        title: "Clean Architecture in Node.js",
-        date: "DEC 10, 2023",
-        rating: 4.9,
-        reviews: 342,
-        views: "1.2K",
-        badge: "TRENDING",
-        type: "ARTICLE",
-        readTime: "8 MIN",
-        categories: ["NODE.JS", "ARCHITECTURE"],
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s"
-    },
-    {
-        title: "React Server Components",
-        date: "NOV 15, 2023",
-        rating: 4.8,
-        reviews: 215,
-        views: "980",
-        badge: "HOT",
-        type: "SERIES",
-        readTime: "12 MIN",
-        categories: ["REACT", "NEXT.JS"],
-        image: "/series-placeholder.svg"
-    },
-    {
-        title: "The Rust Borrow Checker",
-        date: "OCT 05, 2023",
-        rating: 5.0,
-        reviews: 512,
-        views: "850",
-        badge: "TOP RATED",
-        type: "POST",
-        readTime: "15 MIN",
-        categories: ["RUST", "SYSTEMS"],
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2KAlrHuDKVF06-cRNaeXcPzB5pbLgqSc-_g&s"
-    },
-];
-
-export default function TopPicks() {
-    // Densifies once the search card docks above it. A single CSS transition
-    // instead of scroll-linked gap/scale, which relayout on every frame.
-    const isDocked = useIsDocked();
+/** The three best pieces by weighted rating and views (see getTopPicks). */
+export default async function TopPicks() {
+    const locale = await getLocale();
+    const [t, common, picks] = await Promise.all([
+        getTranslations("Home"),
+        getTranslations("Archive.common"),
+        getTopPicks(locale),
+    ]);
+    const typeLabel = { article: common("typeArticle"), post: common("typePost"), series: t("series") };
 
     return (
-        <div className="w-full">
-            <div
-                className={cn(
-                    "flex flex-col transition-[gap] duration-300 ease-out",
-                    isDocked ? "gap-2" : "gap-4"
-                )}
-            >
-                <h2
-                    className={cn(
-                        "text-2xl font-extrabold text-foreground tracking-tight mb-3 origin-top-left transition-transform duration-300 ease-out",
-                        isDocked ? "scale-75" : "scale-100"
-                    )}
-                >
-                    Top Picks
-                </h2>
-                {TOP_PICKS.map((pick) => (
-                    <TopPickItem key={pick.title} {...pick} isDocked={isDocked} />
-                ))}
-            </div>
-        </div>
+        <TopPicksList
+            title={t("topPicks")}
+            picks={picks.map((pick) => ({
+                href: pick.kind === "series" ? `/series/${pick.slug}` : contentHref(pick),
+                lang: pick.locale,
+                title: pick.title,
+                date: formatDate(pick.kind === "series" ? pick.updatedAt : pick.publishedAt, locale),
+                rating: pick.rating,
+                reviews: pick.ratingCount,
+                views: formatCompact(pick.views, locale),
+                type: typeLabel[pick.kind],
+                readTime: common("minRead", { minutes: pick.readMinutes }),
+                categories: pick.tags.slice(0, 2),
+                image: pick.cover ?? FALLBACK_COVER,
+            }))}
+        />
     );
 }

@@ -1,8 +1,14 @@
 import { Star, Eye, Clock } from "lucide-react";
 import Image from "next/image";
+import type { Locale } from "next-intl";
+import { Link } from "@/i18n/routing";
+import { MIN_RATINGS } from "@/lib/content/types";
 import { cn } from "@/lib/utils";
 
-interface TopPickItemProps {
+export interface TopPickItemData {
+    href: string;
+    /** Language the title is in. */
+    lang: Locale;
     title: string;
     date: string;
     rating: number;
@@ -13,12 +19,16 @@ interface TopPickItemProps {
     categories: string[];
     image: string;
     badge?: string;
+}
+
+interface TopPickItemProps extends TopPickItemData {
     isDocked: boolean;
 }
 
-export default function TopPickItem({ title, date, rating, reviews, views, type, readTime, categories, image, badge, isDocked }: TopPickItemProps) {
+export default function TopPickItem({ href, lang, title, date, rating, reviews, views, type, readTime, categories, image, badge, isDocked }: TopPickItemProps) {
     return (
-        <div
+        <Link
+            href={href}
             className={cn(
                 "flex items-stretch rounded-2xl bg-white dark:bg-slate-900/70 shadow-[0_1px_2px_rgb(15_23_42/0.06),0_8px_24px_rgb(15_23_42/0.06)] dark:shadow-none border border-slate-200 dark:border-white/10 transition-all duration-300 hover:bg-white dark:hover:bg-slate-900/80 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-primary/10 group cursor-pointer overflow-hidden relative h-[100px]",
                 isDocked ? "opacity-90" : "opacity-100"
@@ -72,6 +82,7 @@ export default function TopPickItem({ title, date, rating, reviews, views, type,
             >
                 <div className="flex justify-between items-start mb-1 gap-2">
                     <h4
+                        lang={lang}
                         style={{ lineHeight: "1.3" }}
                         className={cn(
                             "font-bold text-foreground line-clamp-2 group-hover:text-primary transition-all duration-300",
@@ -98,19 +109,21 @@ export default function TopPickItem({ title, date, rating, reviews, views, type,
 
                 {/* Metrics */}
                 <div className="flex items-center gap-3 text-muted-foreground text-[9px] mt-auto uppercase tracking-wide">
-                    <div className="flex items-center gap-1.5">
-                        <div className="flex items-center gap-0.5">
-                            <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
-                            <span className="font-bold text-foreground">{rating.toFixed(1)}</span>
+                    {reviews >= MIN_RATINGS && (
+                        <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-0.5">
+                                <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
+                                <span className="font-bold text-foreground">{rating.toFixed(1)}</span>
+                            </div>
+                            <span className="text-muted-foreground">({reviews})</span>
                         </div>
-                        <span className="text-muted-foreground">({reviews})</span>
-                    </div>
+                    )}
                     <div className="flex items-center gap-1">
                         <Eye className="w-2.5 h-2.5" />
                         <span>{views}</span>
                     </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }

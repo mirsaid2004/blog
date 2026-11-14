@@ -147,9 +147,13 @@ R2 has a free tier but needs a payment method on the Cloudflare account.
 
 ## 5. Cron secret
 
-`CRON_SECRET`: run `openssl rand -base64 32`. It guards `/api/content/sync`
-(a daily Vercel cron re-syncs content in case a webhook was missed), and later
-scheduled publishing and the image sweeper. To re-sync production by hand:
+`CRON_SECRET`: run `openssl rand -base64 32`. It guards `/api/cron/daily` (a
+daily job that re-syncs content in case a webhook was missed and prunes view
+events older than 90 days) and `/api/content/sync`. The daily job is a Netlify
+Scheduled Function (`netlify/functions/daily-maintenance.mts`, 04:00 UTC) that
+calls `/api/cron/daily`; it runs only on production deploys, and "Run now" in
+the Netlify UI triggers it by hand. To re-sync production
+by hand:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://blog.mirsaidmirakhmedov.uz/api/content/sync
@@ -157,6 +161,18 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://blog.mirsaidmirakhm
 
 ## Production (when you deploy)
 
+The site is hosted on **Netlify** (its Next.js runtime is detected
+automatically).
+
+- Netlify → Site configuration → **Environment variables**: add every variable
+  from `.env` with its production value. `GITHUB_APP_PRIVATE_KEY` can be pasted
+  either as the original multi-line PEM or as the one-line `\n` form.
+  `SMEE_URL` is only for local development.
+- The daily job (`netlify/functions/daily-maintenance.mts`) is picked up on
+  deploy. Check it under **Logs → Functions** after the first deploy.
+- Netlify functions time out after 10 seconds by default. A webhook sync only
+  downloads changed files and takes a few seconds; the first full sync of a new
+  database is better run locally with `npm run content:sync`.
 - `NEXT_PUBLIC_SITE_URL` and `BETTER_AUTH_URL`: `https://blog.mirsaidmirakhmedov.uz`
 - GitHub App webhook URL: `https://blog.mirsaidmirakhmedov.uz/api/webhooks/github`
 - GitHub OAuth App: nothing to change if both redirect URIs were added

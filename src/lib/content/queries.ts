@@ -1,8 +1,9 @@
 import type { Locale } from "next-intl";
 import { routing } from "@/i18n/routing";
 import { assetUrl } from "@/lib/assets";
+import { searchContent } from "./search";
 import { loadContent, type PieceSource, type SeriesSource } from "./source";
-import { getStats } from "./stats";
+import { loadStats, type StatsLookup } from "./stats";
 import {
   SORT_KEYS,
   type ArchiveFilters,
@@ -38,7 +39,7 @@ function localize(source: PieceSource | SeriesSource, locale: Locale) {
   return { localized, translation: translations[shown]! };
 }
 
-function toItem(source: PieceSource, locale: Locale): ContentItem | null {
+function toItem(source: PieceSource, locale: Locale, getStats: StatsLookup): ContentItem | null {
   const resolved = localize(source, locale);
   if (!resolved) return null;
   const { meta } = source;
@@ -59,8 +60,9 @@ function toItem(source: PieceSource, locale: Locale): ContentItem | null {
 
 /** Every published article and post, newest first, in the reader's language where possible. */
 async function getItems(locale: Locale): Promise<ContentItem[]> {
-  return (await loadContent()).pieces
-    .map((piece) => toItem(piece, locale))
+  const [content, getStats] = await Promise.all([loadContent(), loadStats()]);
+  return content.pieces
+    .map((piece) => toItem(piece, locale, getStats))
     .filter((item): item is ContentItem => item !== null)
     .sort(newestFirst);
 }
@@ -86,8 +88,9 @@ export async function getPostBySlug(slug: string, locale: Locale): Promise<Conte
  * parts are skipped; a series with no published parts is hidden.
  */
 export async function getSeries(locale: Locale): Promise<SeriesWithItems[]> {
-  const byId = new Map((await getItems(locale)).map((item) => [item.id, item]));
-  return (await loadContent()).series
+  const [items, content, getStats] = await Promise.all([getItems(locale), loadContent(), loadStats()]);
+  const byId = new Map(items.map((item) => [item.id, item]));
+  return content.series
     .flatMap((source): SeriesWithItems[] => {
       const resolved = localize(source, locale);
       const parts = source.meta.items
@@ -169,27 +172,49 @@ export function parseFilters(params: SearchParams): ArchiveFilters {
 }
 
 interface Filterable extends ContentStats {
+  id: string;
   title: string;
   summary: string;
   tags: string[];
   publishedAt: string;
 }
 
-export function applyFilters<T extends Filterable>(
+interface FilterOptions<T> {
+  /** Ids that also make the item match, e.g. a series' parts. */
+  relatedIds?: (item: T) => string[];
+  /** Extra text for the substring fallback, e.g. a series' part titles. */
+  extraText?: (item: T) => string;
+}
+
+/**
+ * Tag filter, search and sort for the archive lists. Search uses Postgres
+ * full-text search over title, summary and body (see search.ts); a tag that
+ * contains the query also matches. Without the database (CONTENT_SOURCE=local)
+ * or if the search query fails, it falls back to substring matching.
+ */
+export async function filterItems<T extends Filterable>(
   items: T[],
   { q, tag, sort }: ArchiveFilters,
-  /** Extra text to match the query against, e.g. a series' part titles. */
-  extraText: (item: T) => string = () => ""
-): T[] {
+  locale: Locale,
+  { relatedIds = () => [], extraText = () => "" }: FilterOptions<T> = {}
+): Promise<T[]> {
   const needle = q.toLowerCase();
-  const filtered = items.filter((item) => {
-    if (tag && !item.tags.includes(tag)) return false;
+  let hits: Map<string, number> | null = null;
+  if (needle) {
+    try {
+      hits = await searchContent(q, locale);
+    } catch (error) {
+      console.error("search failed, falling back to substring matching", error);
+    }
+  }
+
+  const matches = (item: T) => {
     if (!needle) return true;
-    const haystack = [item.title, item.summary, item.tags.join(" "), extraText(item)]
-      .join(" ")
-      .toLowerCase();
-    return haystack.includes(needle);
-  });
+    if (item.tags.some((t) => t.includes(needle))) return true;
+    if (hits) return hits.has(item.id) || relatedIds(item).some((id) => hits.has(id));
+    return [item.title, item.summary, extraText(item)].join(" ").toLowerCase().includes(needle);
+  };
+  const filtered = items.filter((item) => (!tag || item.tags.includes(tag)) && matches(item));
 
   const sorters: Record<SortKey, (a: T, b: T) => number> = {
     latest: (a, b) => b.publishedAt.localeCompare(a.publishedAt),
@@ -197,6 +222,53 @@ export function applyFilters<T extends Filterable>(
     top: (a, b) => b.rating - a.rating || b.ratingCount - a.ratingCount,
   };
   return [...filtered].sort(sorters[sort]);
+}
+
+/**
+ * Articles and posts matching a free-text query, most relevant first (the home
+ * page search). Same matching as filterItems, ordered by search rank.
+ */
+export async function searchItems(items: ContentItem[], q: string, locale: Locale): Promise<ContentItem[]> {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return items;
+  let hits: Map<string, number> | null = null;
+  try {
+    hits = await searchContent(needle, locale);
+  } catch (error) {
+    console.error("search failed, falling back to substring matching", error);
+  }
+  const tagHit = (item: ContentItem) => item.tags.some((t) => t.includes(needle));
+  if (!hits) {
+    return items.filter(
+      (item) => tagHit(item) || `${item.title} ${item.summary}`.toLowerCase().includes(needle)
+    );
+  }
+  const score = (item: ContentItem) => (hits.get(item.id) ?? 0) + (tagHit(item) ? 0.5 : 0);
+  return items
+    .filter((item) => hits.has(item.id) || tagHit(item))
+    .sort((a, b) => score(b) - score(a) || b.publishedAt.localeCompare(a.publishedAt));
+}
+
+export type TopPick = (ContentItem & { kind: "article" | "post" }) | (SeriesWithItems & { kind: "series" });
+
+/** Prior for the weighted rating: a piece starts as if it had PRIOR_COUNT ratings of PRIOR_MEAN. */
+const PRIOR_MEAN = 3.5;
+const PRIOR_COUNT = 5;
+
+/**
+ * Best pieces by real data: a Bayesian-weighted rating (a few 5-star ratings
+ * don't beat many 4.8s) scaled by log views. Ties, e.g. before any data
+ * exists, go to the newest piece.
+ */
+export async function getTopPicks(locale: Locale, count = 3): Promise<TopPick[]> {
+  const [items, series] = await Promise.all([getItems(locale), getSeries(locale)]);
+  const all: TopPick[] = [
+    ...items.map((item) => ({ ...item, kind: item.type })),
+    ...series.map((s) => ({ ...s, kind: "series" as const })),
+  ];
+  const score = (p: TopPick) =>
+    ((PRIOR_MEAN * PRIOR_COUNT + p.rating * p.ratingCount) / (PRIOR_COUNT + p.ratingCount)) * Math.log10(10 + p.views);
+  return all.sort((a, b) => score(b) - score(a) || b.publishedAt.localeCompare(a.publishedAt)).slice(0, count);
 }
 
 /** Tags with how many items use them, most used first. */
