@@ -122,5 +122,31 @@
   "Metadata": {
     "title": "M_DEV · Mirsaid Mirakhmedovning dasturlash haqidagi blogi",
     "description": "Dasturiy ta'minot arxitekturasi, tizimlar unumdorligi va zamonaviy veb haqida maqolalar, postlar va seriyalar. Muallif: Mirsaid Mirakhmedov."
+  },
+  "Auth": {
+    "signIn": "Kirish",
+    "signInTitle": "M_DEV ga kirish",
+    "signInHint": "Baho berish va izoh qoldirish uchun kiring. O'qish uchun hisob kerak emas.",
+    "continueWith": "{provider} orqali davom etish",
+    "signOut": "Chiqish",
+    "admin": "Admin",
+    "account": "Hisob",
+    "accountMenu": "Hisob menyusi"
+  },
+  "Admin": {
+    "title": "Admin",
+    "signInRequired": "Davom etish uchun admin GitHub hisobi bilan kiring.",
+    "contentTitle": "Kontent",
+    "contentRepo": "Repozitoriy",
+    "lastSync": "Oxirgi sinxronlash",
+    "commit": "Kommit",
+    "never": "Hali sinxronlanmagan",
+    "items": "Indeksdagi yozuvlar",
+    "rejected": "Rad etilgan fayllar",
+    "noRejected": "Rad etilgan fayllar yo'q.",
+    "syncNow": "Sinxronlash",
+    "syncing": "Sinxronlanmoqda…",
+    "synced": "{items} ta yozuv sinxronlandi ({downloaded} ta fayl yuklandi, {removed} ta o'chirildi).",
+    "syncFailed": "Sinxronlashda xato: {message}"
   }
 }

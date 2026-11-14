@@ -122,5 +122,31 @@
   "Metadata": {
     "title": "M_DEV · Software engineering blog by Mirsaid Mirakhmedov",
     "description": "Articles, posts and series on software architecture, systems performance and the modern web, written by Mirsaid Mirakhmedov."
+  },
+  "Auth": {
+    "signIn": "Sign in",
+    "signInTitle": "Sign in to M_DEV",
+    "signInHint": "Sign in to rate and comment. Reading never needs an account.",
+    "continueWith": "Continue with {provider}",
+    "signOut": "Sign out",
+    "admin": "Admin",
+    "account": "Account",
+    "accountMenu": "Account menu"
+  },
+  "Admin": {
+    "title": "Admin",
+    "signInRequired": "Sign in with the admin GitHub account to continue.",
+    "contentTitle": "Content",
+    "contentRepo": "Repository",
+    "lastSync": "Last sync",
+    "commit": "Commit",
+    "never": "Never synced",
+    "items": "Indexed items",
+    "rejected": "Rejected files",
+    "noRejected": "No rejected files.",
+    "syncNow": "Sync now",
+    "syncing": "Syncing…",
+    "synced": "Synced {items} items ({downloaded} files downloaded, {removed} removed).",
+    "syncFailed": "Sync failed: {message}"
   }
 }

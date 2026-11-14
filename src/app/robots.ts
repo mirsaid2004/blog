@@ -3,7 +3,8 @@ import { absoluteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/" },
+    // Admin pages are also noindex; API routes have nothing to index.
+    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/*/admin"] },
     sitemap: absoluteUrl("/sitemap.xml"),
   };
 }
