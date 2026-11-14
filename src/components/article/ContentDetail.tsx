@@ -1,3 +1,4 @@
+import type { Locale } from "next-intl";
 import { ArrowLeft, Info } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import BlurText from "@/components/react-bits/BlurText";
@@ -15,7 +16,8 @@ import { SeriesBanner, SeriesPager } from "./SeriesNav";
 
 interface ContentDetailProps {
   item: ContentItem;
-  locale: string;
+  /** The reader's locale; the item may be shown in another language (`item.locale`). */
+  locale: Locale;
   /** Set when the piece was opened from a series (`?series=`). */
   seriesContext: SeriesContext | null;
   labels: {
@@ -31,7 +33,7 @@ interface ContentDetailProps {
  * "On this page" rail. Articles show their cover; posts are text-first.
  */
 export default async function ContentDetail({ item, locale, seriesContext, labels }: ContentDetailProps) {
-  const body = await getContentBody(item.type, item.slug, locale, mdxComponents);
+  const body = await getContentBody(item.type, item.slug, item.locale, mdxComponents);
   const toc = body?.toc ?? [];
   const isArticle = item.type === "article";
   const backHref = seriesContext ? `/series/${seriesContext.series.slug}` : isArticle ? "/articles" : "/posts";
@@ -97,7 +99,7 @@ export default async function ContentDetail({ item, locale, seriesContext, label
 
           <MobileToc items={toc} title={labels.onThisPage} />
 
-          {body && body.locale !== locale && (
+          {item.locale !== locale && (
             <p className="mb-8 flex items-start gap-2 rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
               <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               {labels.fallbackNotice}
@@ -105,7 +107,7 @@ export default async function ContentDetail({ item, locale, seriesContext, label
           )}
 
           {body ? (
-            <div className="article-body" lang={body.locale}>
+            <div className="article-body" lang={item.locale}>
               {body.content}
             </div>
           ) : (

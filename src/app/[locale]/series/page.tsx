@@ -22,10 +22,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: t("eyebrow"), description: t("description") };
 }
 
-export default async function SeriesPage({ searchParams }: PageProps) {
+export default async function SeriesPage({ params, searchParams }: PageProps) {
   const t = await getTranslations("Archive");
   const filters = parseFilters(await searchParams);
-  const all = getSeries();
+  const { locale } = await params;
+  const all = getSeries(locale);
   // Search also matches the titles of the parts inside each series.
   const results = applyFilters(all, filters, (s) => s.parts.map((p) => p.title).join(" "));
   const totalParts = all.reduce((sum, s) => sum + s.parts.length, 0);

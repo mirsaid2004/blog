@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft, ArrowRight, Clock, Layers } from "lucide-react";
-import { Link } from "@/i18n/routing";
+import { Link, routing } from "@/i18n/routing";
 import BlurText from "@/components/react-bits/BlurText";
 import ContentMeta from "@/components/archive/ContentMeta";
 import Cover from "@/components/archive/Cover";
@@ -11,23 +11,31 @@ import Reveal from "@/components/archive/Reveal";
 import TagList from "@/components/archive/TagList";
 import { formatDate } from "@/lib/content/format";
 import { contentHref } from "@/lib/content/links";
-import { getSeriesBySlug } from "@/lib/content/queries";
+import { getSeries, getSeriesBySlug } from "@/lib/content/queries";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{ locale: Locale; slug: string }>;
 }
 
+/**
+ * Every slug in every locale. Also makes `next build` read and validate content/,
+ * so a malformed file fails the build instead of a request.
+ */
+export function generateStaticParams() {
+  return routing.locales.flatMap((locale) => getSeries(locale).map(({ slug }) => ({ locale, slug })));
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const series = getSeriesBySlug(slug);
+  const { locale, slug } = await params;
+  const series = getSeriesBySlug(slug, locale);
   if (!series) return {};
   return { title: series.title, description: series.summary };
 }
 
 export default async function SeriesDetailPage({ params }: PageProps) {
   const { locale, slug } = await params;
-  const series = getSeriesBySlug(slug);
+  const series = getSeriesBySlug(slug, locale);
   if (!series) notFound();
 
   const t = await getTranslations("SeriesDetail");

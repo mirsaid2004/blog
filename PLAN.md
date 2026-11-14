@@ -1,6 +1,6 @@
 # Development Plan — M_DEV Blog
 
-_Last updated: 2026-11-07_
+_Last updated: 2026-11-14_
 
 ## Goals
 
@@ -104,13 +104,13 @@ The repo holds text only. Images live in R2 (see [2.3](#23-media-cloudflare-r2))
 ```yaml
 # articles/distributed-sagas/meta.yml
 id: 01JC8Z6R4K2M9X7Q3T5V8W1Y2A   # stable ULID; never changes, even if the slug does
-type: article                    # article | post | series
-slug: distributed-sagas          # shared by all languages
 originalLocale: en               # the language it was written in; source for translations
 publishedAt: 2026-11-07
 tags: [systems, architecture]
 cover: content/01JC8Z6R4K2M9X7Q3T5V8W1Y2A/3f9a1c0e7b2d4a6f.webp   # R2 key, not a URL
 ```
+
+The type and slug come from the folder path (`articles/distributed-sagas/`), so they can't drift from it.
 
 Each `<locale>.mdx` holds what differs per language:
 
@@ -119,7 +119,7 @@ Each `<locale>.mdx` holds what differs per language:
 ---
 title: Осваиваем распределённые саги
 summary: …
-status: published        # draft | published | scheduled, per language
+status: published        # draft | published, per language (scheduled comes in Phase 6)
 translatedFrom: 4e1b9c2  # optional: git sha of the source file this translation is based on
 ---
 
@@ -175,8 +175,6 @@ A series is an **ordered collection of existing articles and posts**, which can 
 ```yaml
 # series/distributed-systems/meta.yml
 id: 01JC9A2B3C4D5E6F7G8H9J0K1M
-type: series
-slug: distributed-systems
 originalLocale: en
 publishedAt: 2026-11-07
 cover: content/01JC9A2B3C4D5E6F7G8H9J0K1M/9b1e4d2a7c3f6e80.webp
@@ -444,9 +442,9 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 
 - [x] **Content language.** Decided: any piece can be written in en, ru and/or uz, as `<type>/<slug>/meta.yml` plus one `<locale>.mdx` per language (see [2.1.1](#211-multilingual-content)).
 - [ ] **Shared or per-language slugs?** One shared Latin slug for all languages (recommended), or optional localized slugs per language.
-- [ ] **Lists in a locale.** Show pieces without a translation in that language with a language badge (recommended, so the site doesn't look empty in ru and uz early on), or hide them.
+- [x] **Lists in a locale.** Decided: every published piece appears in every language's lists. A card shows which languages the piece is in when the reader's language is missing. Opening it shows a published version straight away, with a notice and buttons for the available languages. The notice says the reader's translation is "coming soon" only when that translation exists as a draft.
 - [x] **Series model.** Decided: a series is an ordered list of existing articles and posts, which can be mixed (see [2.1.2](#212-series-model)).
-- [ ] **One series or several per piece?** The model supports a piece belonging to several series (recommended, since it costs nothing extra). If you'd rather allow only one, add a unique index on `series_item.item_id`.
+- [x] **One series or several per piece?** Decided: several are allowed, though it will be rare. The `?series=` link decides which banner a reader sees.
 - [ ] **Post versus article.** If a post is a short note with no cover or table of contents, keep one `content` table with a `type` column.
 - [ ] **Publish merge style.** A merge commit keeps the full draft history reachable from `main` (recommended, since you want searchable history). A squash merge keeps `main` cleaner but leaves the history only on the draft branch. It also changes which images count as published (see [2.3](#23-media-cloudflare-r2)).
 - [ ] **Image domain.** Pick the R2 custom domain, for example `img.<your-domain>`.
