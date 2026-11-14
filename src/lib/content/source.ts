@@ -1,172 +1,153 @@
 import fs from "node:fs";
 import path from "node:path";
-import { cache } from "react";
+import { and, eq } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import type { Locale } from "next-intl";
-import { parse as parseYaml } from "yaml";
-import { z } from "zod";
-import { routing } from "@/i18n/routing";
+import { cache } from "react";
+import { db, schema } from "@/lib/db";
 import {
-  pieceMetaSchema,
-  seriesMetaSchema,
-  translationSchema,
-  type PieceMeta,
-  type SeriesMeta,
-  type TranslationFrontmatter,
-} from "./schema";
+  formatIssues,
+  isContentPath,
+  parseContent,
+  type ContentStore as FullStore,
+  type PieceSource as FullPiece,
+  type SeriesSource as FullSeries,
+  type Translation,
+} from "./parse";
 import type { ContentType } from "./types";
 
 /**
- * Reads content/ — the local stand-in for the GitHub content repo (see PLAN.md):
+ * Where pages read content from:
  *
- *   content/<articles|posts|series>/<slug>/meta.yml      shared by every language
- *   content/<articles|posts|series>/<slug>/<locale>.mdx  one file per language
+ * - `database` (default): the content index in Neon, filled from the GitHub
+ *   content repo by the webhook and `npm run content:sync`.
+ * - `local` (CONTENT_SOURCE=local): a checkout of the content repo at
+ *   CONTENT_DIR, parsed on each request. For working offline.
  *
- * The folder gives the type and slug. Every file is validated, so a typo fails
- * loudly with the file's path instead of rendering a broken page.
+ * Lists use the store without bodies; a body is loaded only for its own page.
+ * Everything is cached under the `content` tag, which a sync revalidates.
  */
 
-const CONTENT_ROOT = path.join(process.cwd(), "content");
-const WORDS_PER_MINUTE = 200;
+export const CONTENT_TAG = "content";
 
-export interface Translation extends TranslationFrontmatter {
-  /** MDX body without frontmatter. */
-  body: string;
-  readMinutes: number;
-}
+/** A translation's metadata, without the MDX body. */
+export type TranslationMeta = Omit<Translation, "body">;
+export type PieceSource = FullPiece<TranslationMeta>;
+export type SeriesSource = FullSeries<TranslationMeta>;
+export type ContentStore = FullStore<TranslationMeta>;
 
-type Translations = Partial<Record<Locale, Translation>>;
+const isLocal = () => process.env.CONTENT_SOURCE === "local";
+const isDev = process.env.NODE_ENV === "development";
 
-export interface PieceSource {
-  type: ContentType;
-  slug: string;
-  meta: PieceMeta;
-  translations: Translations;
-}
+// --- local ---------------------------------------------------------------------
 
-export interface SeriesSource {
-  slug: string;
-  meta: SeriesMeta;
-  translations: Translations;
-}
-
-export interface ContentStore {
-  pieces: PieceSource[];
-  series: SeriesSource[];
-}
-
-const FOLDERS = { articles: "article", posts: "post" } as const satisfies Record<string, ContentType>;
-const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---[^\S\r\n]*(?:\r?\n|$)/;
-
-class ContentError extends Error {
-  constructor(file: string, message: string) {
-    super(`${path.relative(process.cwd(), file)}: ${message}`);
-    this.name = "ContentError";
+// Only used with CONTENT_SOURCE=local, so the paths are excluded from output
+// tracing (otherwise Turbopack would bundle the whole project into the server).
+function readLocalFiles(): Map<string, string> {
+  const root = path.resolve(/*turbopackIgnore: true*/ process.env.CONTENT_DIR ?? "../blog-db");
+  if (!fs.existsSync(/*turbopackIgnore: true*/ root)) throw new Error(`CONTENT_DIR not found: ${root}`);
+  const files = new Map<string, string>();
+  for (const entry of fs.readdirSync(/*turbopackIgnore: true*/ root, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const file = path.join(/*turbopackIgnore: true*/ entry.parentPath, entry.name);
+    const rel = path.relative(root, file).split(path.sep).join("/");
+    if (isContentPath(rel)) files.set(rel, fs.readFileSync(/*turbopackIgnore: true*/ file, "utf8"));
   }
+  return files;
 }
 
-function validate<T>(schema: z.ZodType<T>, data: unknown, file: string): T {
-  const result = schema.safeParse(data);
-  if (!result.success) throw new ContentError(file, `\n${z.prettifyError(result.error)}`);
-  return result.data;
+const loadLocal = cache((): FullStore => {
+  const { store, errors, warnings } = parseContent(readLocalFiles());
+  if (warnings.length) console.warn(formatIssues(warnings));
+  if (errors.length) throw new Error(`Invalid content:\n${formatIssues(errors)}`);
+  return store;
+});
+
+function withoutBody({ body, ...meta }: Translation): TranslationMeta {
+  void body;
+  return meta;
 }
 
-function parseYamlIn(text: string, file: string): unknown {
-  try {
-    return parseYaml(text);
-  } catch (error) {
-    throw new ContentError(file, (error as Error).message);
+function stripBodies(store: FullStore): ContentStore {
+  const strip = <T extends { translations: Partial<Record<Locale, Translation>> }>(source: T) => ({
+    ...source,
+    translations: Object.fromEntries(Object.entries(source.translations).map(([l, t]) => [l, withoutBody(t!)])),
+  });
+  return { pieces: store.pieces.map(strip), series: store.series.map(strip) };
+}
+
+// --- database ------------------------------------------------------------------
+
+async function readIndex(): Promise<ContentStore> {
+  const { contentItems, contentTranslations } = schema;
+  const [items, translations] = await Promise.all([
+    db().select().from(contentItems),
+    db()
+      .select({
+        itemId: contentTranslations.itemId,
+        locale: contentTranslations.locale,
+        title: contentTranslations.title,
+        summary: contentTranslations.summary,
+        status: contentTranslations.status,
+        readMinutes: contentTranslations.readMinutes,
+      })
+      .from(contentTranslations),
+  ]);
+
+  const byItem = new Map<string, Partial<Record<Locale, TranslationMeta>>>();
+  for (const { itemId, locale, ...t } of translations) {
+    const entry = byItem.get(itemId) ?? {};
+    entry[locale as Locale] = t;
+    byItem.set(itemId, entry);
   }
-}
 
-const readYaml = (file: string) => parseYamlIn(fs.readFileSync(file, "utf8"), file);
-
-function readMinutes(body: string): number {
-  const words = body.split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
-}
-
-function readTranslations(dir: string, originalLocale: Locale): Translations {
-  const translations: Translations = {};
-  for (const locale of routing.locales) {
-    const file = path.join(dir, `${locale}.mdx`);
-    if (!fs.existsSync(file)) continue;
-    const source = fs.readFileSync(file, "utf8");
-    const match = source.match(FRONTMATTER);
-    if (!match) throw new ContentError(file, "missing frontmatter (title, summary, status)");
-    const frontmatter = validate(translationSchema, parseYamlIn(match[1], file), file);
-    const body = source.slice(match[0].length).trim();
-    translations[locale] = { ...frontmatter, body, readMinutes: readMinutes(body) };
-  }
-  if (!translations[originalLocale]) {
-    throw new ContentError(path.join(dir, `${originalLocale}.mdx`), "the original-language file is missing");
-  }
-  return translations;
-}
-
-function slugDirs(folder: string): string[] {
-  const dir = path.join(CONTENT_ROOT, folder);
-  if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort();
-}
-
-function readAll(): ContentStore {
-  const pieces: PieceSource[] = [];
-  for (const [folder, type] of Object.entries(FOLDERS)) {
-    for (const slug of slugDirs(folder)) {
-      const dir = path.join(CONTENT_ROOT, folder, slug);
-      const metaFile = path.join(dir, "meta.yml");
-      const meta = validate(pieceMetaSchema, readYaml(metaFile), metaFile);
-      pieces.push({ type, slug, meta, translations: readTranslations(dir, meta.originalLocale) });
+  const store: ContentStore = { pieces: [], series: [] };
+  for (const item of items.sort((a, b) => a.slug.localeCompare(b.slug))) {
+    const base = {
+      id: item.id,
+      originalLocale: item.originalLocale as Locale,
+      publishedAt: item.publishedAt,
+      tags: item.tags,
+      ...(item.cover ? { cover: item.cover } : {}),
+    };
+    const translationsOf = byItem.get(item.id) ?? {};
+    if (item.kind === "series") {
+      store.series.push({ slug: item.slug, meta: { ...base, items: item.seriesItems ?? [] }, translations: translationsOf });
+    } else {
+      store.pieces.push({ type: item.kind, slug: item.slug, meta: base, translations: translationsOf });
     }
   }
-
-  const series: SeriesSource[] = [];
-  for (const slug of slugDirs("series")) {
-    const dir = path.join(CONTENT_ROOT, "series", slug);
-    const metaFile = path.join(dir, "meta.yml");
-    const meta = validate(seriesMetaSchema, readYaml(metaFile), metaFile);
-    series.push({ slug, meta, translations: readTranslations(dir, meta.originalLocale) });
-  }
-
-  checkIds(pieces, series);
-  return { pieces, series };
+  return store;
 }
 
-/** Ids must be unique; series items must be article or post ids, listed once. */
-function checkIds(pieces: PieceSource[], series: SeriesSource[]) {
-  const seen = new Map<string, string>();
-  const claim = (id: string, where: string) => {
-    const previous = seen.get(id);
-    if (previous) throw new Error(`Duplicate content id "${id}" in ${previous} and ${where}`);
-    seen.set(id, where);
-  };
-  pieces.forEach((p) => claim(p.meta.id, `content/${p.type}s/${p.slug}`));
-  series.forEach((s) => claim(s.meta.id, `content/series/${s.slug}`));
-
-  const pieceIds = new Set(pieces.map((p) => p.meta.id));
-  for (const s of series) {
-    const file = path.join(CONTENT_ROOT, "series", s.slug, "meta.yml");
-    const duplicate = s.meta.items.find((id, i) => s.meta.items.indexOf(id) !== i);
-    if (duplicate) throw new ContentError(file, `item "${duplicate}" is listed more than once`);
-    // Unknown ids are skipped rather than fatal, so deleting a piece never breaks the build.
-    for (const id of s.meta.items) {
-      if (!pieceIds.has(id)) {
-        console.warn(`${path.relative(process.cwd(), file)}: unknown item "${id}" is skipped`);
-      }
-    }
-  }
+async function readBody(type: ContentType, slug: string, locale: Locale): Promise<string | null> {
+  const { contentItems, contentTranslations } = schema;
+  const [row] = await db()
+    .select({ body: contentTranslations.body })
+    .from(contentTranslations)
+    .innerJoin(contentItems, eq(contentItems.id, contentTranslations.itemId))
+    .where(and(eq(contentItems.kind, type), eq(contentItems.slug, slug), eq(contentTranslations.locale, locale)))
+    .limit(1);
+  return row?.body ?? null;
 }
 
-// Production reads content once per process. In development it re-reads on each
-// request (deduped within a request), so edits to content/ show up on refresh.
-let store: ContentStore | undefined;
-const readPerRequest = cache(readAll);
+// In development, read the index on every request (deduped within it), so a
+// `npm run content:sync` shows up on refresh. In production, cache until a sync
+// revalidates the tag.
+const cachedIndex = isDev ? cache(readIndex) : unstable_cache(readIndex, ["content-index"], { tags: [CONTENT_TAG] });
+const cachedBody = isDev ? cache(readBody) : unstable_cache(readBody, ["content-body"], { tags: [CONTENT_TAG] });
 
-export function loadContent(): ContentStore {
-  if (process.env.NODE_ENV === "development") return readPerRequest();
-  return (store ??= readAll());
+// --- public --------------------------------------------------------------------
+
+export async function loadContent(): Promise<ContentStore> {
+  return isLocal() ? stripBodies(loadLocal()) : cachedIndex();
+}
+
+/** The MDX body of one translation, or null if it doesn't exist. */
+export async function loadBody(type: ContentType, slug: string, locale: Locale): Promise<string | null> {
+  if (isLocal()) {
+    const piece = loadLocal().pieces.find((p) => p.type === type && p.slug === slug);
+    return piece?.translations[locale]?.body ?? null;
+  }
+  return cachedBody(type, slug, locale);
 }

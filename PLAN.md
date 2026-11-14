@@ -64,8 +64,8 @@ Neon holds only what git can't do well: users, sessions, ratings, views, the pub
         │                    │   └─ Neon: users/sessions, published-content index, ratings, views, assets
         │                    └─ presigned PUT URL (admin only) + `asset` row
         ▼
-   Cloudflare R2  ── blog-media (public, img.<domain>, CDN-cached)
-                  └─ blog-notes-media (private, signed GET URLs)
+   Cloudflare R2  ── mdev-blog (public, img.<domain>, CDN-cached)
+                  └─ mdev-blog-private (private, signed GET URLs)
 ```
 
 ### 2.1 Content storage in GitHub
@@ -266,8 +266,8 @@ draft/<slug>         ← one branch per piece in progress
 
 | Bucket | Access | Used for |
 |---|---|---|
-| `blog-media` | Public, custom domain, CDN-cached | Article, post and series images and covers |
-| `blog-notes-media` | Private | Note images, served through short-lived signed GET URLs or an admin-only proxy route |
+| `mdev-blog` | Public, custom domain, CDN-cached | Article, post and series images and covers |
+| `mdev-blog-private` | Private | Note images, served through short-lived signed GET URLs or an admin-only proxy route |
 
 #### Keys: content-addressed and immutable
 
@@ -318,12 +318,12 @@ Skip anything younger than 24 hours, so an in-flight upload is never deleted.
 
 **If you choose squash merges** (see Open decisions), only images in the final squashed content reach `main`'s history. On publish, mark only those as published and delete the intermediate ones.
 
-**Notes** use the same table with `bucket = blog-notes-media` and no draft branch. Deleting a note deletes its `content/<id>/` prefix.
+**Notes** use the same table with `bucket = mdev-blog-private` and no draft branch. Deleting a note deletes its `content/<id>/` prefix.
 
 #### Rendering
 
 - Add `img.<domain>` to `images.remotePatterns` in `next.config.ts`.
-- To avoid Vercel's image-optimization quota, use a custom `next/image` loader backed by Cloudflare Image Transformations, or serve the client-resized files with `unoptimized`. Check Cloudflare's free tier for transformations.
+- To avoid image-optimization limits on the host, use a custom `next/image` loader backed by Cloudflare Image Transformations, or serve the client-resized files with `unoptimized`. Check Cloudflare's free tier for transformations.
 
 #### Tradeoffs
 
@@ -392,7 +392,7 @@ asset         (key PK, content_id, draft_branch, bucket, bytes, created_at, publ
 - Serve them only under `/admin/notes`, behind the server-side admin check.
 - Use the same editor and pipeline, with no ratings or views. Notes can be committed directly, without a draft branch, since they are never published.
 - Use the same layout as public content: `notes/<slug>/meta.yml` + `en.mdx` / `ru.mdx` / `uz.mdx`, written in whichever languages you like.
-- Note images go to the private `blog-notes-media` bucket and are deleted with the note.
+- Note images go to the private `mdev-blog-private` bucket and are deleted with the note.
 
 ### 2.8 The MDX editor
 
@@ -448,7 +448,7 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 - [ ] **Post versus article.** If a post is a short note with no cover or table of contents, keep one `content` table with a `type` column.
 - [ ] **Publish merge style.** A merge commit keeps the full draft history reachable from `main` (recommended, since you want searchable history). A squash merge keeps `main` cleaner but leaves the history only on the draft branch. It also changes which images count as published (see [2.3](#23-media-cloudflare-r2)).
 - [ ] **Image domain.** Pick the R2 custom domain, for example `img.<your-domain>`.
-- [ ] **Hosting.** Vercel is the natural fit for ISR, `revalidateTag` and cron jobs. If you self-host, revalidation and cron need extra setup.
+- [x] **Hosting.** Decided: Netlify. Its Next.js runtime handles ISR and `revalidateTag`; the daily job is a Netlify Scheduled Function that calls `/api/cron/daily`.
 
 ---
 
@@ -465,8 +465,8 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 | Auth | Better Auth (GitHub + Google), Drizzle adapter |
 | Database | Neon Postgres + Drizzle ORM (users, ratings, views, published index, assets) |
 | Editor | CodeMirror 6 + live MDX preview |
-| Media | Cloudflare R2: `blog-media` (public, custom domain) and `blog-notes-media` (private); content-hashed immutable keys; `asset` table for cleanup |
-| Hosting | Vercel |
+| Media | Cloudflare R2: `mdev-blog` (public, custom domain) and `mdev-blog-private` (private); content-hashed immutable keys; `asset` table for cleanup |
+| Hosting | Netlify (Next.js runtime, Scheduled Functions) |
 
 ---
 

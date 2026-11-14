@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { sitePageMetadata } from "@/lib/seo";
 import { NotebookPen } from "lucide-react";
 import ArchiveHeader from "@/components/archive/ArchiveHeader";
 import ArchiveToolbar from "@/components/archive/ArchiveToolbar";
 import ArchiveBackdrop from "@/components/archive/effects/ArchiveBackdrop";
 import EmptyState from "@/components/archive/EmptyState";
 import PostList from "@/components/archive/PostList";
-import { applyFilters, getPosts, parseFilters, tagCounts } from "@/lib/content/queries";
+import { filterItems, getPosts, parseFilters, tagCounts } from "@/lib/content/queries";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
@@ -18,15 +19,15 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Archive.posts" });
-  return { title: t("eyebrow"), description: t("description") };
+  return sitePageMetadata({ locale, path: "/posts", title: t("eyebrow"), description: t("description") });
 }
 
 export default async function PostsPage({ params, searchParams }: PageProps) {
   const t = await getTranslations("Archive");
   const filters = parseFilters(await searchParams);
   const { locale } = await params;
-  const all = getPosts(locale);
-  const results = applyFilters(all, filters);
+  const all = await getPosts(locale);
+  const results = await filterItems(all, filters, locale);
   const minutes = all.reduce((sum, p) => sum + p.readMinutes, 0);
   const views = all.reduce((sum, p) => sum + p.views, 0);
 

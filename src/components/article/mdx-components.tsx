@@ -1,6 +1,8 @@
 import type { ComponentProps } from "react";
+import Image from "next/image";
 import type { MDXComponents } from "mdx/types";
 import { Link2 } from "lucide-react";
+import { assetUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 
 type HeadingProps = ComponentProps<"h2">;
@@ -55,9 +57,47 @@ export const mdxComponents: MDXComponents = {
   ),
   th: (props) => <th className="border-b border-border bg-muted/50 px-4 py-2.5 text-left font-semibold" {...props} />,
   td: (props) => <td className="border-b border-border px-4 py-2.5 align-top text-foreground/85 [tr:last-child_&]:border-b-0" {...props} />,
-  img: ({ alt = "", ...props }) => (
-    // Article images are arbitrary remote URLs until the R2 pipeline exists.
+  // Markdown `![alt](src)`: size unknown, so a plain lazy <img>. Prefer <Img> for R2 images.
+  img: ({ alt = "", src, ...props }) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img alt={alt} className="my-8 rounded-xl border border-border" loading="lazy" {...props} />
+    <img
+      alt={alt}
+      src={typeof src === "string" ? assetUrl(src) : src}
+      className="my-8 rounded-xl border border-border"
+      loading="lazy"
+      {...props}
+    />
   ),
+  Img,
 };
+
+interface ImgProps {
+  /** R2 key (`content/<id>/<hash>.webp`), a site path, or an absolute URL. */
+  src: string;
+  alt: string;
+  /** Intrinsic size, so the page doesn't shift while the image loads. */
+  width: number;
+  height: number;
+  caption?: string;
+}
+
+/** `<Img src="content/<id>/<hash>.webp" width={1600} height={900} alt="…" />` in MDX. */
+function Img({ src, alt, width, height, caption }: ImgProps) {
+  const image = (
+    <Image
+      src={assetUrl(src)}
+      alt={alt}
+      width={width}
+      height={height}
+      sizes="(min-width: 768px) 720px, 100vw"
+      className="h-auto w-full rounded-xl border border-border"
+    />
+  );
+  if (!caption) return <div className="my-8">{image}</div>;
+  return (
+    <figure className="my-8">
+      {image}
+      <figcaption className="mt-2 text-center text-sm text-muted-foreground">{caption}</figcaption>
+    </figure>
+  );
+}

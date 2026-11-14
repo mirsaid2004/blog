@@ -118,5 +118,53 @@
     "readIn": "Read in:",
     "alsoIn": "Also in:",
     "availableIn": "Available in {languages}"
+  },
+  "Metadata": {
+    "title": "M_DEV · Software engineering blog by Mirsaid Mirakhmedov",
+    "description": "Articles, posts and series on software architecture, systems performance and the modern web, written by Mirsaid Mirakhmedov."
+  },
+  "Auth": {
+    "signIn": "Sign in",
+    "signInTitle": "Sign in to M_DEV",
+    "signInHint": "Sign in to rate and comment. Reading never needs an account.",
+    "continueWith": "Continue with {provider}",
+    "signOut": "Sign out",
+    "admin": "Admin",
+    "account": "Account",
+    "accountMenu": "Account menu"
+  },
+  "Admin": {
+    "title": "Admin",
+    "signInRequired": "Sign in with the admin GitHub account to continue.",
+    "contentTitle": "Content",
+    "contentRepo": "Repository",
+    "lastSync": "Last sync",
+    "commit": "Commit",
+    "never": "Never synced",
+    "items": "Indexed items",
+    "rejected": "Rejected files",
+    "noRejected": "No rejected files.",
+    "syncNow": "Sync now",
+    "syncing": "Syncing…",
+    "synced": "Synced {items} items ({downloaded} files downloaded, {removed} removed).",
+    "syncFailed": "Sync failed: {message}"
+  },
+  "Engagement": {
+    "rateTitle": "Rate this {kind, select, article {article} post {post} other {series}}",
+    "average": "{rating} average from {count, plural, one {# rating} other {# ratings}}",
+    "notEnough": "{count, plural, =0 {No ratings yet} one {# rating so far} other {# ratings so far}}",
+    "starLabel": "{value, plural, one {# star} other {# stars}}",
+    "yourRating": "Your rating: {value}/5. Click it again to remove it.",
+    "hint": "Your rating helps other readers find the best pieces.",
+    "signInToRate": "Sign in to rate.",
+    "error": "Couldn't save your rating. Please try again."
+  },
+  "Home": {
+    "latest": "Latest",
+    "series": "Series",
+    "topPicks": "Top Picks",
+    "viewAll": "View all",
+    "searchPlaceholder": "Search articles and posts…",
+    "resultsFor": "Results for “{query}”"
   }
 }

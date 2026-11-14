@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { Moon, Sun, Globe, Menu, X } from "lucide-react";
 import Logo from "./Logo";
+import { MobileUserMenu, UserMenu } from "./auth/UserMenu";
 import { cn } from "@/lib/utils";
 import { useMounted } from "@/lib/use-mounted";
 import { Locale } from "next-intl";
@@ -25,6 +26,7 @@ const navItems: Array<{
 export function Navbar() {
   const { resolvedTheme } = useTheme();
   const t = useTranslations("Navigation");
+  const tAuth = useTranslations("Auth");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -202,6 +204,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             <LanguageSwitcher />
             <ThemeToggle />
+            <UserMenu />
           </div>
 
           {/* Mobile Hamburger Button */}
@@ -283,6 +286,14 @@ export function Navbar() {
 
                 {/* Divider */}
                 <div className="border-t border-border my-4" />
+
+                {/* Account */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-3 px-4">
+                    {tAuth("account")}
+                  </h3>
+                  <MobileUserMenu />
+                </div>
 
                 {/* Language Switcher */}
                 <div className="mb-6">

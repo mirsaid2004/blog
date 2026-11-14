@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { sitePageMetadata } from "@/lib/seo";
 import { Layers } from "lucide-react";
 import ArchiveHeader from "@/components/archive/ArchiveHeader";
 import ArchiveToolbar from "@/components/archive/ArchiveToolbar";
@@ -9,7 +10,7 @@ import ArchiveBackdrop from "@/components/archive/effects/ArchiveBackdrop";
 import EmptyState from "@/components/archive/EmptyState";
 import Reveal from "@/components/archive/Reveal";
 import SeriesCollectionCard from "@/components/archive/SeriesCollectionCard";
-import { applyFilters, getSeries, parseFilters, tagCounts } from "@/lib/content/queries";
+import { filterItems, getSeries, parseFilters, tagCounts } from "@/lib/content/queries";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
@@ -19,16 +20,19 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Archive.series" });
-  return { title: t("eyebrow"), description: t("description") };
+  return sitePageMetadata({ locale, path: "/series", title: t("eyebrow"), description: t("description") });
 }
 
 export default async function SeriesPage({ params, searchParams }: PageProps) {
   const t = await getTranslations("Archive");
   const filters = parseFilters(await searchParams);
   const { locale } = await params;
-  const all = getSeries(locale);
-  // Search also matches the titles of the parts inside each series.
-  const results = applyFilters(all, filters, (s) => s.parts.map((p) => p.title).join(" "));
+  const all = await getSeries(locale);
+  // A series also matches when one of its parts does.
+  const results = await filterItems(all, filters, locale, {
+    relatedIds: (s) => s.parts.map((p) => p.id),
+    extraText: (s) => s.parts.map((p) => p.title).join(" "),
+  });
   const totalParts = all.reduce((sum, s) => sum + s.parts.length, 0);
   const minutes = all.reduce((sum, s) => sum + s.readMinutes, 0);
 

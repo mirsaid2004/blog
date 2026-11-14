@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { sitePageMetadata } from "@/lib/seo";
 import { Newspaper } from "lucide-react";
 import ArchiveHeader from "@/components/archive/ArchiveHeader";
 import ArchiveToolbar from "@/components/archive/ArchiveToolbar";
@@ -10,7 +11,7 @@ import ArticleCard from "@/components/archive/ArticleCard";
 import EmptyState from "@/components/archive/EmptyState";
 import Reveal from "@/components/archive/Reveal";
 import FeaturedArticle from "@/components/archive/FeaturedArticle";
-import { applyFilters, getArticles, hasActiveFilters, parseFilters, tagCounts } from "@/lib/content/queries";
+import { filterItems, getArticles, hasActiveFilters, parseFilters, tagCounts } from "@/lib/content/queries";
 
 interface PageProps {
   params: Promise<{ locale: Locale }>;
@@ -20,15 +21,15 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Archive.articles" });
-  return { title: t("eyebrow"), description: t("description") };
+  return sitePageMetadata({ locale, path: "/articles", title: t("eyebrow"), description: t("description") });
 }
 
 export default async function ArticlesPage({ params, searchParams }: PageProps) {
   const t = await getTranslations("Archive");
   const filters = parseFilters(await searchParams);
   const { locale } = await params;
-  const all = getArticles(locale);
-  const results = applyFilters(all, filters);
+  const all = await getArticles(locale);
+  const results = await filterItems(all, filters, locale);
 
   // Feature the newest article only on the unfiltered view, where "newest" is meaningful.
   const showFeatured = !hasActiveFilters(filters) && results.length > 1;

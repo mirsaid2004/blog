@@ -1,4 +1,4 @@
-import { useLocale } from 'next-intl';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import SeriesCard from './SeriesCard';
 import { RefreshCw, Gift, Percent, ArrowUpRight, Zap, Target, BookOpen, Layers } from 'lucide-react';
@@ -41,9 +41,10 @@ const DECOR = [
     },
 ];
 
-export default function Series() {
-    const locale = useLocale();
-    const seriesData = getSeries(locale)
+export default async function Series() {
+    const locale = await getLocale();
+    const t = await getTranslations('Home');
+    const seriesData = (await getSeries(locale))
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
         .slice(0, HOME_SERIES_COUNT)
         .map((series, idx) => {
@@ -67,13 +68,13 @@ export default function Series() {
         <section className="mb-16">
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
-                    Series
+                    {t('series')}
                 </h2>
                 <Link
                     href="/series"
                     className="text-primary text-sm font-medium hover:underline underline-offset-4 decoration-primary/50"
                 >
-                    View All
+                    {t('viewAll')}
                 </Link>
             </div>
 

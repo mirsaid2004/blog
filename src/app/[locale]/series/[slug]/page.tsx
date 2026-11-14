@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { contentPageMetadata } from "@/lib/seo";
 import { ArrowLeft, ArrowRight, Clock, Layers } from "lucide-react";
 import { Link, routing } from "@/i18n/routing";
 import BlurText from "@/components/react-bits/BlurText";
@@ -11,6 +13,8 @@ import LanguageBadge from "@/components/archive/LanguageBadge";
 import Reveal from "@/components/archive/Reveal";
 import TagList from "@/components/archive/TagList";
 import { OtherLanguages, TranslationNotice } from "@/components/article/TranslationNotice";
+import { ViewTracker } from "@/components/article/ViewTracker";
+import { RatingPanel } from "@/components/engagement/RatingPanel";
 import { formatDate } from "@/lib/content/format";
 import { contentHref } from "@/lib/content/links";
 import { getSeries, getSeriesBySlug } from "@/lib/content/queries";
@@ -21,23 +25,26 @@ interface PageProps {
 }
 
 /**
- * Every slug in every locale. Also makes `next build` read and validate content/,
- * so a malformed file fails the build instead of a request.
+ * Prerender every slug in every locale from the content index. Slugs published
+ * after the build render on first request and are cached until the next sync.
  */
-export function generateStaticParams() {
-  return routing.locales.flatMap((locale) => getSeries(locale).map(({ slug }) => ({ locale, slug })));
+export async function generateStaticParams() {
+  const perLocale = await Promise.all(
+    routing.locales.map(async (locale) => (await getSeries(locale)).map(({ slug }) => ({ locale, slug })))
+  );
+  return perLocale.flat();
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const series = getSeriesBySlug(slug, locale);
+  const series = await getSeriesBySlug(slug, locale);
   if (!series) return {};
-  return { title: series.title, description: series.summary };
+  return contentPageMetadata({ locale, path: `/series/${slug}`, item: series, ogType: "website" });
 }
 
 export default async function SeriesDetailPage({ params }: PageProps) {
   const { locale, slug } = await params;
-  const series = getSeriesBySlug(slug, locale);
+  const series = await getSeriesBySlug(slug, locale);
   if (!series) notFound();
 
   const t = await getTranslations("SeriesDetail");
@@ -177,7 +184,12 @@ export default async function SeriesDetailPage({ params }: PageProps) {
             ))}
           </ol>
         </section>
+
+        <Suspense fallback={null}>
+          <RatingPanel contentId={series.id} kind="series" average={series.rating} count={series.ratingCount} />
+        </Suspense>
       </div>
+      <ViewTracker id={series.id} locale={series.locale} />
     </main>
   );
 }

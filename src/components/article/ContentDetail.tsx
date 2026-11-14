@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import BlurText from "@/components/react-bits/BlurText";
@@ -9,11 +10,13 @@ import { getContentBody } from "@/lib/content/mdx";
 import type { SeriesContext } from "@/lib/content/queries";
 import type { ContentItem } from "@/lib/content/types";
 import { cn } from "@/lib/utils";
+import { RatingPanel } from "@/components/engagement/RatingPanel";
 import MobileToc from "./MobileToc";
 import TableOfContents from "./TableOfContents";
 import { mdxComponents } from "./mdx-components";
 import { SeriesBanner, SeriesPager } from "./SeriesNav";
 import { OtherLanguages, TranslationNotice } from "./TranslationNotice";
+import { ViewTracker } from "./ViewTracker";
 
 interface ContentDetailProps {
   /** Resolved for the reader's locale; `item.locale` is the language it's shown in. */
@@ -120,8 +123,13 @@ export default async function ContentDetail({ item, seriesContext, labels }: Con
             </p>
           )}
 
+          <Suspense fallback={null}>
+            <RatingPanel contentId={item.id} kind={item.type} average={item.rating} count={item.ratingCount} />
+          </Suspense>
+
           {seriesContext && <SeriesPager context={seriesContext} />}
         </article>
+        <ViewTracker id={item.id} locale={item.locale} />
 
         {toc.length > 0 && (
           <aside className="hidden xl:block">

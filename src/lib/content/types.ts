@@ -4,6 +4,9 @@ export type ContentType = "article" | "post";
 
 export type TranslationStatus = "draft" | "published";
 
+/** Show an average rating only once a piece has this many ratings. */
+export const MIN_RATINGS = 3;
+
 export interface ContentStats {
   views: number;
   rating: number;
@@ -18,6 +21,8 @@ export interface Localized {
   languages: Locale[];
   /** Languages whose translation exists but is still a draft ("coming soon"). */
   upcoming: Locale[];
+  /** The language it was written in; preferred fallback and `x-default` for search engines. */
+  originalLocale: Locale;
 }
 
 /** An article or a post. Articles are long-form with a cover; posts are short and text-first. */

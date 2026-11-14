@@ -3,6 +3,7 @@ import { Link } from "@/i18n/routing";
 import type { Locale } from "next-intl";
 import { Clock, Eye, Star } from "lucide-react";
 import LanguageBadge from "@/components/archive/LanguageBadge";
+import { MIN_RATINGS } from "@/lib/content/types";
 
 interface BlogCardProps {
     title: string;
@@ -96,13 +97,17 @@ export default function BlogCard({
 
                     {/* Footer - Metrics */}
                     <div className="pt-4 border-t border-border flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 text-foreground text-xs font-medium">
-                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                <span>{rating.toFixed(1)}</span>
+                        {reviews >= MIN_RATINGS ? (
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1 text-foreground text-xs font-medium">
+                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                    <span>{rating.toFixed(1)}</span>
+                                </div>
+                                <span className="text-muted-foreground text-xs">({reviews})</span>
                             </div>
-                            <span className="text-muted-foreground text-xs">({reviews} reviews)</span>
-                        </div>
+                        ) : (
+                            <span />
+                        )}
                         <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
                             <Eye className="w-4 h-4" />
                             <span>{views}</span>

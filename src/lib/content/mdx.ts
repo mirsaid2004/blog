@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import rehypePrettyCode, { type Options as PrettyCodeOptions } from "rehype-pretty-code";
 import type { Locale } from "next-intl";
-import { loadContent } from "./source";
+import { loadBody } from "./source";
 import type { ContentType } from "./types";
 
 /** One heading in a piece's table of contents. */
@@ -58,8 +58,7 @@ function rehypeCollectToc(toc: TocItem[]) {
  */
 export const getContentBody = cache(
   async (type: ContentType, slug: string, locale: Locale, components: MDXComponents) => {
-    const piece = loadContent().pieces.find((p) => p.type === type && p.slug === slug);
-    const body = piece?.translations[locale]?.body;
+    const body = await loadBody(type, slug, locale);
     if (!body) return null;
 
     const toc: TocItem[] = [];

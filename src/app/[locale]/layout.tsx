@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { NextIntlClientProvider, type Locale } from "next-intl";
+import { getMessages, getTranslations } from "next-intl/server";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { ogLocale } from "@/lib/seo";
+import { AUTHOR, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,93 +22,41 @@ const geistMono = Geist_Mono({
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: Locale }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-
-  const titles = {
-    en: "Mirsaid Mirakhmedov | Full-Stack Developer & Software Engineer",
-    ru: "Мирсаид Мирахмедов | Фулстек-разработчик и Программист",
-    uz: "Mirsaid Mirakhmedov | Full-Stack Dasturchi va Dasturiy Ta'minot Muhandisi",
-  };
-
-  const descriptions = {
-    en: "Full-stack software engineer specializing in Next.js, React, TypeScript, and Node.js. Building high-performance web applications with modern technologies. Available for freelance and full-time opportunities.",
-    ru: "Фулстек программист, специализирующийся на Next.js, React, TypeScript и Node.js. Создание высокопроизводительных веб-приложений с современными технологиями. Доступен для фриланса и полной занятости.",
-    uz: "Next.js, React, TypeScript va Node.js bo'yicha mutaxassis full-stack dasturchi. Zamonaviy texnologiyalar bilan yuqori samarali veb-ilovalar yaratish. Frilans va to'liq vaqtli ish uchun mavjud.",
-  };
-
-  const title = titles[locale as keyof typeof titles] || titles.en;
-  const description =
-    descriptions[locale as keyof typeof descriptions] || descriptions.en;
+  const t = await getTranslations({ locale, namespace: "Metadata" });
+  const title = t("title");
+  const description = t("description");
 
   return {
     title: {
       default: title,
-      template: `%s | ${
-        locale === "ru"
-          ? "Мирсаид Мирахмедов"
-          : locale === "uz"
-          ? "Mirsaid Mirakhmedov"
-          : "Mirsaid Mirakhmedov"
-      }`,
+      template: `%s | ${SITE_NAME}`,
     },
     description,
-    keywords: [
-      "Mirsaid Mirakhmedov",
-      "Full-Stack Developer",
-      "Software Engineer",
-      "Next.js Developer",
-      "React Developer",
-      "TypeScript Developer",
-      "Node.js Developer",
-      "Web Development",
-      "Frontend Developer",
-      "Backend Developer",
-      "JavaScript Developer",
-      "Uzbekistan Developer",
-      "Portfolio",
-      "Freelance Developer",
-      "Remote Developer",
-    ],
-    authors: [{ name: "Mirsaid Mirakhmedov" }],
-    creator: "Mirsaid Mirakhmedov",
-    publisher: "Mirsaid Mirakhmedov",
+    authors: [{ name: AUTHOR }],
+    creator: AUTHOR,
+    publisher: AUTHOR,
     formatDetection: {
       email: false,
       address: false,
       telephone: false,
     },
-    metadataBase: new URL("https://mirsaidmirakhmedov.uz"), // Replace with your actual domain
-    alternates: {
-      canonical: "/",
-      languages: {
-        en: "/en",
-        ru: "/ru",
-        uz: "/uz",
-      },
-    },
+    metadataBase: new URL(SITE_URL),
+    // Canonical URLs and hreflang are set per page (see src/lib/seo.ts). A site-wide
+    // `canonical: "/"` here would mark every page as a duplicate of the home page.
     openGraph: {
       type: "website",
-      locale: locale,
-      url: "/",
-      siteName: "Mirsaid Mirakhmedov Portfolio",
-      title: title,
-      description: description,
-      images: [
-        {
-          url: "/avatar.jpg", // Create this image
-          width: 1200,
-          height: 630,
-          alt: "Mirsaid Mirakhmedov - Full-Stack Developer",
-        },
-      ],
+      locale: ogLocale(locale),
+      siteName: SITE_NAME,
+      title,
+      description,
     },
+    // No title, description or image here: pages don't set `twitter`, so X falls
+    // back to each page's og:title, og:description and og:image.
     twitter: {
       card: "summary_large_image",
-      title: title,
-      description: description,
-      images: ["/avatar.jpg"],
       creator: "@mirsaid_dev", // Replace with your Twitter handle
     },
     robots: {
