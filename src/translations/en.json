@@ -118,5 +118,9 @@
     "readIn": "Read in:",
     "alsoIn": "Also in:",
     "availableIn": "Available in {languages}"
+  },
+  "Metadata": {
+    "title": "M_DEV · Software engineering blog by Mirsaid Mirakhmedov",
+    "description": "Articles, posts and series on software architecture, systems performance and the modern web, written by Mirsaid Mirakhmedov."
   }
 }

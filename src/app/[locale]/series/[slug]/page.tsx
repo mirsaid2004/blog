@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { contentPageMetadata } from "@/lib/seo";
 import { ArrowLeft, ArrowRight, Clock, Layers } from "lucide-react";
 import { Link, routing } from "@/i18n/routing";
 import BlurText from "@/components/react-bits/BlurText";
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { locale, slug } = await params;
   const series = getSeriesBySlug(slug, locale);
   if (!series) return {};
-  return { title: series.title, description: series.summary };
+  return contentPageMetadata({ locale, path: `/series/${slug}`, item: series, ogType: "website" });
 }
 
 export default async function SeriesDetailPage({ params }: PageProps) {

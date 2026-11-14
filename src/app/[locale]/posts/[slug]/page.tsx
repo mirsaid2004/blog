@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { contentPageMetadata } from "@/lib/seo";
 import { routing } from "@/i18n/routing";
 import ContentDetail from "@/components/article/ContentDetail";
 import { firstParam, getPostBySlug, getPosts, getSeriesContext } from "@/lib/content/queries";
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { locale, slug } = await params;
   const post = getPostBySlug(slug, locale);
   if (!post) return {};
-  return { title: post.title, description: post.summary };
+  return contentPageMetadata({ locale, path: `/posts/${slug}`, item: post, ogType: "article" });
 }
 
 export default async function PostPage({ params, searchParams }: PageProps) {

@@ -118,5 +118,9 @@
     "readIn": "O'qish tili:",
     "alsoIn": "Boshqa tillarda:",
     "availableIn": "Mavjud tillar: {languages}"
+  },
+  "Metadata": {
+    "title": "M_DEV · Mirsaid Mirakhmedovning dasturlash haqidagi blogi",
+    "description": "Dasturiy ta'minot arxitekturasi, tizimlar unumdorligi va zamonaviy veb haqida maqolalar, postlar va seriyalar. Muallif: Mirsaid Mirakhmedov."
   }
 }

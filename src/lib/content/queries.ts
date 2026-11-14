@@ -32,6 +32,7 @@ function localize(source: PieceSource | SeriesSource, locale: Locale) {
     locale: shown,
     languages,
     upcoming: routing.locales.filter((l) => translations[l]?.status === "draft"),
+    originalLocale: meta.originalLocale,
   };
   return { localized, translation: translations[shown]! };
 }

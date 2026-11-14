@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { sitePageMetadata } from "@/lib/seo";
 import { NotebookPen } from "lucide-react";
 import ArchiveHeader from "@/components/archive/ArchiveHeader";
 import ArchiveToolbar from "@/components/archive/ArchiveToolbar";
@@ -18,7 +19,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Archive.posts" });
-  return { title: t("eyebrow"), description: t("description") };
+  return sitePageMetadata({ locale, path: "/posts", title: t("eyebrow"), description: t("description") });
 }
 
 export default async function PostsPage({ params, searchParams }: PageProps) {

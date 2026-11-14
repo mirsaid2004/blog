@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
+import { contentPageMetadata } from "@/lib/seo";
 import { routing } from "@/i18n/routing";
 import ContentDetail from "@/components/article/ContentDetail";
 import { firstParam, getArticleBySlug, getArticles, getSeriesContext } from "@/lib/content/queries";
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { locale, slug } = await params;
   const article = getArticleBySlug(slug, locale);
   if (!article) return {};
-  return { title: article.title, description: article.summary };
+  return contentPageMetadata({ locale, path: `/articles/${slug}`, item: article, ogType: "article" });
 }
 
 export default async function ArticlePage({ params, searchParams }: PageProps) {
