@@ -21,10 +21,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: t("eyebrow"), description: t("description") };
 }
 
-export default async function PostsPage({ searchParams }: PageProps) {
+export default async function PostsPage({ params, searchParams }: PageProps) {
   const t = await getTranslations("Archive");
   const filters = parseFilters(await searchParams);
-  const all = getPosts();
+  const { locale } = await params;
+  const all = getPosts(locale);
   const results = applyFilters(all, filters);
   const minutes = all.reduce((sum, p) => sum + p.readMinutes, 0);
   const views = all.reduce((sum, p) => sum + p.views, 0);

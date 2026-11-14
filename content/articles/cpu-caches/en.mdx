@@ -1,5 +1,7 @@
 ---
-title: Understanding CPU Caches & Memory Barriers
+title: "Understanding CPU Caches & Memory Barriers"
+summary: "A deep dive into L1/L2 caches, cache lines, and how memory barriers prevent instruction reordering bugs."
+status: published
 ---
 
 A modern CPU core can retire several instructions per nanosecond, but a trip to main memory takes on the order of a hundred nanoseconds. Almost everything about performance-sensitive code follows from that gap. This article covers how caches hide it, why that makes concurrent code surprising, and how memory barriers restore order.

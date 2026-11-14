@@ -1,0 +1,12 @@
+id: s-systems-perf
+originalLocale: en
+publishedAt: 2023-06-10
+tags:
+  - performance
+  - systems
+cover: /series-placeholder.svg
+items:
+  - a-cpu-caches
+  - a-custom-allocator
+  - a-zero-cost
+  - p-edge-runtimes

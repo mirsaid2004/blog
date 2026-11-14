@@ -1,11 +1,11 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { cache } from "react";
 import type { MDXComponents } from "mdx/types";
 import { evaluate } from "next-mdx-remote-client/rsc";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import rehypePrettyCode, { type Options as PrettyCodeOptions } from "rehype-pretty-code";
+import type { Locale } from "next-intl";
+import { loadContent } from "./source";
 import type { ContentType } from "./types";
 
 /** One heading in a piece's table of contents. */
@@ -16,12 +16,6 @@ export interface TocItem {
   depth: number;
 }
 
-/**
- * Local stand-in for the GitHub content repo (see PLAN.md): one folder per piece,
- * one file per language, e.g. content/articles/<slug>/en.mdx.
- */
-const CONTENT_ROOT = path.join(process.cwd(), "content");
-const DEFAULT_LOCALE = "en";
 const TOC_DEPTHS = new Set([2, 3, 4]);
 
 const prettyCode: PrettyCodeOptions = {
@@ -29,19 +23,6 @@ const prettyCode: PrettyCodeOptions = {
   theme: { light: "github-light", dark: "github-dark-dimmed" },
   keepBackground: false,
 };
-
-/** Read the body for a locale, falling back to the default language. */
-async function readSource(type: ContentType, slug: string, locale: string) {
-  const dir = path.join(CONTENT_ROOT, `${type}s`, slug);
-  for (const lang of locale === DEFAULT_LOCALE ? [locale] : [locale, DEFAULT_LOCALE]) {
-    try {
-      return { source: await readFile(path.join(dir, `${lang}.mdx`), "utf8"), locale: lang };
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
-  }
-  return null;
-}
 
 // Minimal hast shapes; enough to walk headings without pulling in @types/hast.
 interface HastNode {
@@ -71,18 +52,21 @@ function rehypeCollectToc(toc: TocItem[]) {
   };
 }
 
-/** Compile a piece's MDX body. Returns null when the piece has no body in any language. */
+/**
+ * Compile a piece's MDX body in `locale`, which must be a language the piece has
+ * (the item's resolved `locale`). Returns null while the body is still empty.
+ */
 export const getContentBody = cache(
-  async (type: ContentType, slug: string, locale: string, components: MDXComponents) => {
-    const file = await readSource(type, slug, locale);
-    if (!file) return null;
+  async (type: ContentType, slug: string, locale: Locale, components: MDXComponents) => {
+    const piece = loadContent().pieces.find((p) => p.type === type && p.slug === slug);
+    const body = piece?.translations[locale]?.body;
+    if (!body) return null;
 
     const toc: TocItem[] = [];
     const { content, error } = await evaluate({
-      source: file.source,
+      source: body,
       components,
       options: {
-        parseFrontmatter: true,
         mdxOptions: {
           remarkPlugins: [remarkGfm],
           rehypePlugins: [rehypeSlug, [rehypePrettyCode, prettyCode], rehypeCollectToc(toc)],
@@ -91,6 +75,6 @@ export const getContentBody = cache(
     });
     if (error) throw error;
 
-    return { content, toc, locale: file.locale };
+    return { content, toc };
   }
 );

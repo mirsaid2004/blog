@@ -262,11 +262,46 @@ These come from how this site stores and renders content.
 
 **Files**
 
-- One folder per piece, one file per language:
-  `content/articles/<slug>/en.mdx`, `content/posts/<slug>/en.mdx`.
-- Use one Latin, lower-case, hyphenated slug shared by all languages.
-- A missing translation is just a missing file. The site then shows the English
-  version with a notice, so always write `en.mdx`.
+- One folder per piece, with a shared `meta.yml` and one file per language:
+
+  ```
+  content/<articles|posts|series>/<slug>/
+    meta.yml   id, originalLocale, publishedAt, tags, cover (series: items)
+    en.mdx     frontmatter: title, summary, status; then the body
+    ru.mdx
+    uz.mdx
+  ```
+
+- The folder gives the type and slug. Use one Latin, lower-case, hyphenated slug
+  shared by all languages.
+- `id` never changes, even if you rename the slug. Series list their parts by id.
+- The `originalLocale` file must exist. A missing translation is just a missing
+  file: readers in that language see a published version with a notice.
+- `status: draft` keeps a translation hidden. Readers in that language see a
+  published version, with a notice that their translation is coming soon.
+- Reading time is calculated from the body; don't write it by hand.
+- Every file is validated. A typo fails `next build` (and the pre-commit hook)
+  with the file and field that are wrong.
+
+Example `meta.yml` and `en.mdx`:
+
+```yaml
+# content/posts/vim-commands/meta.yml
+id: p-vim
+originalLocale: en
+publishedAt: 2023-10-01
+tags: [tooling, productivity]
+```
+
+```mdx
+---
+title: "10 Vim commands that will save you hours"
+summary: "The Vim motions with the biggest payoff for everyday editing."
+status: published
+---
+
+Body starts here.
+```
 
 **Metadata**
 

@@ -12,7 +12,7 @@ export default function LatestBlogs() {
     const locale = useLocale();
     const common = useTranslations("Archive.common");
 
-    const latest = [...getArticles(), ...getPosts()]
+    const latest = [...getArticles(locale), ...getPosts(locale)]
         .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
         .slice(0, LATEST_COUNT);
 

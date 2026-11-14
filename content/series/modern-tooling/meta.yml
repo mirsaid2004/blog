@@ -1,0 +1,11 @@
+id: s-modern-tooling
+originalLocale: en
+publishedAt: 2023-10-01
+tags:
+  - tooling
+cover: /series-placeholder.svg
+items:
+  - p-vim
+  - p-turborepo
+  - p-redux
+  - a-wasm

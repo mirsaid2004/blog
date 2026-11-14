@@ -23,10 +23,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: t("eyebrow"), description: t("description") };
 }
 
-export default async function ArticlesPage({ searchParams }: PageProps) {
+export default async function ArticlesPage({ params, searchParams }: PageProps) {
   const t = await getTranslations("Archive");
   const filters = parseFilters(await searchParams);
-  const all = getArticles();
+  const { locale } = await params;
+  const all = getArticles(locale);
   const results = applyFilters(all, filters);
 
   // Feature the newest article only on the unfiltered view, where "newest" is meaningful.

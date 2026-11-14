@@ -43,7 +43,7 @@ const DECOR = [
 
 export default function Series() {
     const locale = useLocale();
-    const seriesData = getSeries()
+    const seriesData = getSeries(locale)
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
         .slice(0, HOME_SERIES_COUNT)
         .map((series, idx) => {
