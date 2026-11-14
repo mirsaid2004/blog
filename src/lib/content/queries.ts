@@ -1,5 +1,6 @@
 import type { Locale } from "next-intl";
 import { routing } from "@/i18n/routing";
+import { assetUrl } from "@/lib/assets";
 import { loadContent, type PieceSource, type SeriesSource } from "./source";
 import { getStats } from "./stats";
 import {
@@ -50,44 +51,44 @@ function toItem(source: PieceSource, locale: Locale): ContentItem | null {
     publishedAt: meta.publishedAt,
     readMinutes: resolved.translation.readMinutes,
     tags: meta.tags,
-    cover: meta.cover,
+    cover: assetUrl(meta.cover),
     ...resolved.localized,
     ...getStats(meta.id),
   };
 }
 
 /** Every published article and post, newest first, in the reader's language where possible. */
-function getItems(locale: Locale): ContentItem[] {
-  return loadContent()
-    .pieces.map((piece) => toItem(piece, locale))
+async function getItems(locale: Locale): Promise<ContentItem[]> {
+  return (await loadContent()).pieces
+    .map((piece) => toItem(piece, locale))
     .filter((item): item is ContentItem => item !== null)
     .sort(newestFirst);
 }
 
-export function getArticles(locale: Locale): ContentItem[] {
-  return getItems(locale).filter((item) => item.type === "article");
+export async function getArticles(locale: Locale): Promise<ContentItem[]> {
+  return (await getItems(locale)).filter((item) => item.type === "article");
 }
 
-export function getArticleBySlug(slug: string, locale: Locale): ContentItem | undefined {
-  return getArticles(locale).find((article) => article.slug === slug);
+export async function getArticleBySlug(slug: string, locale: Locale): Promise<ContentItem | undefined> {
+  return (await getArticles(locale)).find((article) => article.slug === slug);
 }
 
-export function getPosts(locale: Locale): ContentItem[] {
-  return getItems(locale).filter((item) => item.type === "post");
+export async function getPosts(locale: Locale): Promise<ContentItem[]> {
+  return (await getItems(locale)).filter((item) => item.type === "post");
 }
 
-export function getPostBySlug(slug: string, locale: Locale): ContentItem | undefined {
-  return getPosts(locale).find((post) => post.slug === slug);
+export async function getPostBySlug(slug: string, locale: Locale): Promise<ContentItem | undefined> {
+  return (await getPosts(locale)).find((post) => post.slug === slug);
 }
 
 /**
  * Published series with their published parts in reading order. Draft or unknown
  * parts are skipped; a series with no published parts is hidden.
  */
-export function getSeries(locale: Locale): SeriesWithItems[] {
-  const byId = new Map(getItems(locale).map((item) => [item.id, item]));
-  return loadContent()
-    .series.flatMap((source): SeriesWithItems[] => {
+export async function getSeries(locale: Locale): Promise<SeriesWithItems[]> {
+  const byId = new Map((await getItems(locale)).map((item) => [item.id, item]));
+  return (await loadContent()).series
+    .flatMap((source): SeriesWithItems[] => {
       const resolved = localize(source, locale);
       const parts = source.meta.items
         .map((id) => byId.get(id))
@@ -102,7 +103,7 @@ export function getSeries(locale: Locale): SeriesWithItems[] {
           summary: resolved.translation.summary,
           publishedAt: meta.publishedAt,
           tags: meta.tags,
-          cover: meta.cover,
+          cover: assetUrl(meta.cover),
           items: meta.items,
           ...resolved.localized,
           ...getStats(meta.id),
@@ -118,8 +119,8 @@ export function getSeries(locale: Locale): SeriesWithItems[] {
     .sort(newestFirst);
 }
 
-export function getSeriesBySlug(slug: string, locale: Locale): SeriesWithItems | undefined {
-  return getSeries(locale).find((series) => series.slug === slug);
+export async function getSeriesBySlug(slug: string, locale: Locale): Promise<SeriesWithItems | undefined> {
+  return (await getSeries(locale)).find((series) => series.slug === slug);
 }
 
 export interface SeriesContext {
@@ -134,13 +135,13 @@ export interface SeriesContext {
  * Where an item sits in the series it was opened from (`?series=<slug>`).
  * Null when the slug is missing, unknown, or the series doesn't include the item.
  */
-export function getSeriesContext(
+export async function getSeriesContext(
   itemId: string,
   seriesSlug: string | undefined,
   locale: Locale
-): SeriesContext | null {
+): Promise<SeriesContext | null> {
   if (!seriesSlug) return null;
-  const series = getSeriesBySlug(seriesSlug, locale);
+  const series = await getSeriesBySlug(seriesSlug, locale);
   const index = series?.parts.findIndex((part) => part.id === itemId) ?? -1;
   if (!series || index === -1) return null;
   return {

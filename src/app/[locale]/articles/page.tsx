@@ -28,7 +28,7 @@ export default async function ArticlesPage({ params, searchParams }: PageProps) 
   const t = await getTranslations("Archive");
   const filters = parseFilters(await searchParams);
   const { locale } = await params;
-  const all = getArticles(locale);
+  const all = await getArticles(locale);
   const results = applyFilters(all, filters);
 
   // Feature the newest article only on the unfiltered view, where "newest" is meaningful.

@@ -32,15 +32,15 @@ function contentEntries(path: string, item: Localized, lastModified: string) {
   return entries(path, item.languages, xDefault, lastModified);
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Which languages a piece has doesn't depend on the reader's locale.
   const locale = routing.defaultLocale;
   return [
     ...SITE_PAGES.flatMap((path) => entries(path, routing.locales, routing.defaultLocale)),
-    ...[...getArticles(locale), ...getPosts(locale)].flatMap((item) =>
+    ...[...(await getArticles(locale)), ...(await getPosts(locale))].flatMap((item) =>
       contentEntries(contentHref(item), item, item.publishedAt)
     ),
-    ...getSeries(locale).flatMap((series) =>
+    ...(await getSeries(locale)).flatMap((series) =>
       contentEntries(`/series/${series.slug}`, series, series.updatedAt)
     ),
   ];

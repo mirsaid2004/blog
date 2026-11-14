@@ -262,10 +262,12 @@ These come from how this site stores and renders content.
 
 **Files**
 
-- One folder per piece, with a shared `meta.yml` and one file per language:
+- Content lives in the private content repo (`GITHUB_CONTENT_REPO`, e.g.
+  `mirsaid2004/blog-db`), one folder per piece, with a shared `meta.yml` and one
+  file per language:
 
   ```
-  content/<articles|posts|series>/<slug>/
+  <articles|posts|series>/<slug>/
     meta.yml   id, originalLocale, publishedAt, tags, cover (series: items)
     en.mdx     frontmatter: title, summary, status; then the body
     ru.mdx
@@ -280,13 +282,15 @@ These come from how this site stores and renders content.
 - `status: draft` keeps a translation hidden. Readers in that language see a
   published version, with a notice that their translation is coming soon.
 - Reading time is calculated from the body; don't write it by hand.
-- Every file is validated. A typo fails `next build` (and the pre-commit hook)
-  with the file and field that are wrong.
+- Every file is validated when it's synced. An invalid piece is rejected with
+  the file and field that are wrong (in the webhook response and in
+  `npm run content:sync`), and its previous version stays live.
+- A push to `main` publishes within seconds through the webhook.
 
 Example `meta.yml` and `en.mdx`:
 
 ```yaml
-# content/posts/vim-commands/meta.yml
+# posts/vim-commands/meta.yml
 id: p-vim
 originalLocale: en
 publishedAt: 2023-10-01

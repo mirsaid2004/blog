@@ -26,7 +26,7 @@ export default async function PostsPage({ params, searchParams }: PageProps) {
   const t = await getTranslations("Archive");
   const filters = parseFilters(await searchParams);
   const { locale } = await params;
-  const all = getPosts(locale);
+  const all = await getPosts(locale);
   const results = applyFilters(all, filters);
   const minutes = all.reduce((sum, p) => sum + p.readMinutes, 0);
   const views = all.reduce((sum, p) => sum + p.views, 0);

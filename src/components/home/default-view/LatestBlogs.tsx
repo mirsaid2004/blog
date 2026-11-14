@@ -1,4 +1,4 @@
-import { useLocale, useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { formatCompact, formatDate } from "@/lib/content/format";
 import { contentHref } from "@/lib/content/links";
@@ -8,11 +8,11 @@ import BlogCard from "./BlogCard";
 const LATEST_COUNT = 9;
 const FALLBACK_COVER = "/series-placeholder.svg";
 
-export default function LatestBlogs() {
-    const locale = useLocale();
-    const common = useTranslations("Archive.common");
+export default async function LatestBlogs() {
+    const locale = await getLocale();
+    const common = await getTranslations("Archive.common");
 
-    const latest = [...getArticles(locale), ...getPosts(locale)]
+    const latest = [...(await getArticles(locale)), ...(await getPosts(locale))]
         .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
         .slice(0, LATEST_COUNT);
 

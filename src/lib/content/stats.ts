@@ -1,6 +1,6 @@
 /**
  * Mock views and ratings, keyed by content id. Neon replaces this in Phase 4
- * (see PLAN.md); the content itself lives in content/.
+ * (see PLAN.md); the content itself lives in the content repo.
  */
 import type { ContentStats } from "./types";
 

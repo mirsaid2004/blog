@@ -2,9 +2,9 @@ import { z } from "zod";
 import { routing } from "@/i18n/routing";
 
 /**
- * Schemas for the files in content/. The same schemas will validate the GitHub
- * webhook payloads and the editor (see PLAN.md), so a malformed file is caught
- * before it can break a page.
+ * Schemas for the files in the content repo (see parse.ts). The sync and the
+ * editor (PLAN.md phase 5) both validate with them, so a malformed file is
+ * rejected before it can break a page.
  */
 
 const locale = z.enum(routing.locales);

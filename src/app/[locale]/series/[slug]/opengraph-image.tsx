@@ -10,7 +10,7 @@ export const contentType = "image/png";
 
 export default async function Image({ params }: { params: Promise<{ locale: Locale; slug: string }> }) {
   const { locale, slug } = await params;
-  const series = getSeriesBySlug(slug, locale);
+  const series = await getSeriesBySlug(slug, locale);
   const t = await getTranslations({ locale, namespace: "Archive" });
   if (!series) return renderOgImage({ title: SITE_NAME });
   return renderOgImage({

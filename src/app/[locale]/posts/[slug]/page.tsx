@@ -13,27 +13,30 @@ interface PageProps {
 }
 
 /**
- * Every slug in every locale. Also makes `next build` read and validate content/,
- * so a malformed file fails the build instead of a request.
+ * Prerender every slug in every locale from the content index. Slugs published
+ * after the build render on first request and are cached until the next sync.
  */
-export function generateStaticParams() {
-  return routing.locales.flatMap((locale) => getPosts(locale).map(({ slug }) => ({ locale, slug })));
+export async function generateStaticParams() {
+  const perLocale = await Promise.all(
+    routing.locales.map(async (locale) => (await getPosts(locale)).map(({ slug }) => ({ locale, slug })))
+  );
+  return perLocale.flat();
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const post = getPostBySlug(slug, locale);
+  const post = await getPostBySlug(slug, locale);
   if (!post) return {};
   return contentPageMetadata({ locale, path: `/posts/${slug}`, item: post, ogType: "article" });
 }
 
 export default async function PostPage({ params, searchParams }: PageProps) {
   const { locale, slug } = await params;
-  const post = getPostBySlug(slug, locale);
+  const post = await getPostBySlug(slug, locale);
   if (!post) notFound();
 
   const t = await getTranslations("Post");
-  const seriesContext = getSeriesContext(post.id, firstParam((await searchParams).series), locale);
+  const seriesContext = await getSeriesContext(post.id, firstParam((await searchParams).series), locale);
 
   return (
     <ContentDetail

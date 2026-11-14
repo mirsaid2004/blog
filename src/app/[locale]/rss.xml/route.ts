@@ -26,7 +26,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ loc
   if (!hasLocale(routing.locales, locale)) return new Response("Not found", { status: 404 });
 
   const t = await getTranslations({ locale, namespace: "Footer" });
-  const items = [...getArticles(locale), ...getPosts(locale)]
+  const items = [...(await getArticles(locale)), ...(await getPosts(locale))]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, MAX_ITEMS);
   const home = absoluteUrl(`/${locale}`);

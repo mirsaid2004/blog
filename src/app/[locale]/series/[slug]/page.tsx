@@ -22,23 +22,26 @@ interface PageProps {
 }
 
 /**
- * Every slug in every locale. Also makes `next build` read and validate content/,
- * so a malformed file fails the build instead of a request.
+ * Prerender every slug in every locale from the content index. Slugs published
+ * after the build render on first request and are cached until the next sync.
  */
-export function generateStaticParams() {
-  return routing.locales.flatMap((locale) => getSeries(locale).map(({ slug }) => ({ locale, slug })));
+export async function generateStaticParams() {
+  const perLocale = await Promise.all(
+    routing.locales.map(async (locale) => (await getSeries(locale)).map(({ slug }) => ({ locale, slug })))
+  );
+  return perLocale.flat();
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const series = getSeriesBySlug(slug, locale);
+  const series = await getSeriesBySlug(slug, locale);
   if (!series) return {};
   return contentPageMetadata({ locale, path: `/series/${slug}`, item: series, ogType: "website" });
 }
 
 export default async function SeriesDetailPage({ params }: PageProps) {
   const { locale, slug } = await params;
-  const series = getSeriesBySlug(slug, locale);
+  const series = await getSeriesBySlug(slug, locale);
   if (!series) notFound();
 
   const t = await getTranslations("SeriesDetail");
