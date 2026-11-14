@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
+import type { Locale } from "next-intl";
 import { Clock, Eye, Star } from "lucide-react";
+import LanguageBadge from "@/components/archive/LanguageBadge";
 
 interface BlogCardProps {
     title: string;
@@ -14,6 +16,10 @@ interface BlogCardProps {
     reviews: number;
     views: string;
     href: string;
+    /** Language the title and description are in. */
+    lang: Locale;
+    /** Languages the piece is published in; shown as a badge when the reader's is missing. */
+    languages: Locale[];
 }
 
 export default function BlogCard({
@@ -28,6 +34,8 @@ export default function BlogCard({
     reviews,
     views,
     href,
+    lang,
+    languages,
 }: BlogCardProps) {
     return (
         <Link href={href} className="group block h-full">
@@ -73,13 +81,16 @@ export default function BlogCard({
 
                 {/* Content */}
                 <div className="flex-1 flex flex-col p-6 relative z-10 bg-transparent">
-                    <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-3">
-                        {date}
-                    </p>
-                    <h3 className="text-xl font-bold text-foreground mb-3 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">
+                            {date}
+                        </p>
+                        <LanguageBadge languages={languages} />
+                    </div>
+                    <h3 lang={lang} className="text-xl font-bold text-foreground mb-3 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                         {title}
                     </h3>
-                    <p className="text-muted-foreground text-sm mb-6 line-clamp-3 leading-relaxed flex-1">
+                    <p lang={lang} className="text-muted-foreground text-sm mb-6 line-clamp-3 leading-relaxed flex-1">
                         {description}
                     </p>
 

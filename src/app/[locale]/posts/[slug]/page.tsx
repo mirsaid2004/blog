@@ -37,13 +37,11 @@ export default async function PostPage({ params, searchParams }: PageProps) {
   return (
     <ContentDetail
       item={post}
-      locale={locale}
       seriesContext={seriesContext}
       labels={{
         back: t("backToPosts"),
         onThisPage: t("onThisPage"),
         bodyMissing: t("bodyMissing"),
-        fallbackNotice: t("fallbackNotice"),
       }}
     />
   );

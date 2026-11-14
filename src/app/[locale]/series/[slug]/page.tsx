@@ -7,8 +7,10 @@ import { Link, routing } from "@/i18n/routing";
 import BlurText from "@/components/react-bits/BlurText";
 import ContentMeta from "@/components/archive/ContentMeta";
 import Cover from "@/components/archive/Cover";
+import LanguageBadge from "@/components/archive/LanguageBadge";
 import Reveal from "@/components/archive/Reveal";
 import TagList from "@/components/archive/TagList";
+import { OtherLanguages, TranslationNotice } from "@/components/article/TranslationNotice";
 import { formatDate } from "@/lib/content/format";
 import { contentHref } from "@/lib/content/links";
 import { getSeries, getSeriesBySlug } from "@/lib/content/queries";
@@ -72,8 +74,10 @@ export default async function SeriesDetailPage({ params }: PageProps) {
           </div>
 
           {/* BlurText renders a <p>; keep a real <h1> for document structure and assistive tech. */}
-          <h1 className="sr-only">{series.title}</h1>
-          <div aria-hidden>
+          <h1 className="sr-only" lang={series.locale}>
+            {series.title}
+          </h1>
+          <div aria-hidden lang={series.locale}>
             <BlurText
               text={series.title}
               animateBy="words"
@@ -84,7 +88,10 @@ export default async function SeriesDetailPage({ params }: PageProps) {
             />
           </div>
 
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-300 duration-700">
+          <p
+            lang={series.locale}
+            className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both delay-300 duration-700"
+          >
             {series.summary}
           </p>
 
@@ -109,6 +116,8 @@ export default async function SeriesDetailPage({ params }: PageProps) {
             )}
           </div>
 
+          <OtherLanguages localized={series} href={`/series/${series.slug}`} className="mt-4" />
+
           <Cover
             src={series.cover}
             alt=""
@@ -117,6 +126,8 @@ export default async function SeriesDetailPage({ params }: PageProps) {
             className="mt-8 aspect-21/9 rounded-2xl border border-border"
           />
         </header>
+
+        <TranslationNotice kind="series" localized={series} href={`/series/${series.slug}`} className="mb-12" />
 
         <section aria-labelledby="reading-order">
           <h2 id="reading-order" className="mb-6 text-xs font-semibold uppercase tracking-widest text-primary">
@@ -149,13 +160,16 @@ export default async function SeriesDetailPage({ params }: PageProps) {
                         <time dateTime={part.publishedAt} className="tabular-nums">
                           {formatDate(part.publishedAt, locale)}
                         </time>
+                        <LanguageBadge languages={part.languages} />
                       </div>
-                      <h3 className="mt-2 text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+                      <h3 lang={part.locale} className="mt-2 text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
                         <Link href={contentHref(part, series.slug)} className="after:absolute after:inset-0">
                           {part.title}
                         </Link>
                       </h3>
-                      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{part.summary}</p>
+                      <p lang={part.locale} className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                        {part.summary}
+                      </p>
                     </div>
                   </div>
                 </Reveal>

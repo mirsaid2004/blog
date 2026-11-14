@@ -58,6 +58,8 @@ export default function Series() {
                 icons: decor.icons,
                 images: decor.images,
                 href: `/series/${series.slug}`,
+                lang: series.locale,
+                languages: series.languages,
             };
         });
 

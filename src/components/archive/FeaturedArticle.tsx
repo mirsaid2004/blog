@@ -4,6 +4,7 @@ import { Link } from "@/i18n/routing";
 import type { ContentItem } from "@/lib/content/types";
 import ContentMeta from "./ContentMeta";
 import Cover from "./Cover";
+import LanguageBadge from "./LanguageBadge";
 import TagList from "./TagList";
 import { GlowSurface } from "./effects/Surfaces";
 
@@ -24,13 +25,14 @@ export default function FeaturedArticle({ article }: { article: ContentItem }) {
             {t("featured")}
           </span>
           <TagList tags={article.tags} />
+          <LanguageBadge languages={article.languages} />
         </div>
-        <h2 className="mt-4 text-2xl font-extrabold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary md:text-3xl">
+        <h2 lang={article.locale} className="mt-4 text-2xl font-extrabold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary md:text-3xl">
           <Link href={`/articles/${article.slug}`} className="after:absolute after:inset-0">
             {article.title}
           </Link>
         </h2>
-        <p className="mt-3 text-base leading-relaxed text-muted-foreground">{article.summary}</p>
+        <p lang={article.locale} className="mt-3 text-base leading-relaxed text-muted-foreground">{article.summary}</p>
         <ContentMeta
           className="mt-6"
           publishedAt={article.publishedAt}
