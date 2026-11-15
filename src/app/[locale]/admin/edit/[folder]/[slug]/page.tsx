@@ -7,6 +7,7 @@ import type { PickablePiece } from "@/components/editor/SeriesItems";
 import { getViewer } from "@/lib/auth";
 import { loadContent } from "@/lib/content/source";
 import { draftBranch, FOLDERS, isLocale, SLUG, type Folder } from "@/lib/editor/format";
+import { getSchedule } from "@/lib/editor/publish";
 import { branchHead, MAIN, mainChangesSince, readPiece } from "@/lib/editor/repo";
 
 export const metadata: Metadata = { title: "Editor", robots: { index: false, follow: false } };
@@ -40,11 +41,12 @@ export default async function EditPage({ params, searchParams }: PageProps) {
 
   const branch = draftBranch(folder as Folder, slug);
   const head = await branchHead(branch);
-  const [draftFiles, mainFiles, mainChanges, pieces] = await Promise.all([
+  const [draftFiles, mainFiles, mainChanges, pieces, schedule] = await Promise.all([
     head ? readPiece(folder as Folder, slug, head) : null,
     readPiece(folder as Folder, slug, MAIN),
     head ? mainChangesSince(branch, folder as Folder, slug) : [],
     folder === "series" ? pickablePieces() : [],
+    head ? getSchedule(folder as Folder, slug) : null,
   ]);
   const files = draftFiles ?? mainFiles;
   // Neither a draft nor a published piece: only a new piece (with its language) may start here.
@@ -62,6 +64,7 @@ export default async function EditPage({ params, searchParams }: PageProps) {
       mainChanges={mainChanges}
       pieces={pieces}
       justPublished={published === "1"}
+      schedule={schedule ? { publishAt: schedule.publishAt.toISOString(), lastError: schedule.lastError } : null}
     />
   );
 }

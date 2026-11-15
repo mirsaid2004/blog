@@ -10,6 +10,7 @@ import { getContentBody } from "@/lib/content/mdx";
 import type { SeriesContext } from "@/lib/content/queries";
 import type { ContentItem } from "@/lib/content/types";
 import { cn } from "@/lib/utils";
+import { Comments } from "@/components/engagement/Comments";
 import { RatingPanel } from "@/components/engagement/RatingPanel";
 import MobileToc from "./MobileToc";
 import TableOfContents from "./TableOfContents";
@@ -128,6 +129,10 @@ export default async function ContentDetail({ item, seriesContext, labels }: Con
           </Suspense>
 
           {seriesContext && <SeriesPager context={seriesContext} />}
+
+          <Suspense fallback={null}>
+            <Comments contentId={item.id} locale={item.locale} />
+          </Suspense>
         </article>
         <ViewTracker id={item.id} locale={item.locale} />
 

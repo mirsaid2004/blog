@@ -147,7 +147,9 @@
     "syncNow": "Sync now",
     "syncing": "Syncing…",
     "synced": "Synced {items} items ({downloaded} files downloaded, {removed} removed).",
-    "syncFailed": "Sync failed: {message}"
+    "syncFailed": "Sync failed: {message}",
+    "analytics": "Analytics",
+    "notes": "Notes"
   },
   "Engagement": {
     "rateTitle": "Rate this {kind, select, article {article} post {post} other {series}}",
@@ -253,6 +255,64 @@
     "slugHint": "Lowercase letters, digits and dashes. It's part of the URL and can't be changed later.",
     "slugInvalid": "Use lowercase letters, digits and dashes, starting with a letter or digit.",
     "slugTaken": "That slug is already used by a published piece or a draft.",
-    "create": "Create"
+    "create": "Create",
+    "schedule": "Schedule",
+    "reschedule": "Reschedule",
+    "scheduleAt": "Publish at",
+    "scheduledFor": "Scheduled to go live on {time}.",
+    "scheduledHidden": "No language is set to “published” yet, so it would go live hidden.",
+    "scheduledUnsaved": "Unsaved changes won't be included: save them first.",
+    "scheduleFailed": "Last attempt failed: {error}",
+    "cancelSchedule": "Cancel schedule",
+    "scheduledList": "Scheduled"
+  },
+  "Comments": {
+    "title": "{count, plural, =0 {Comments} one {# comment} other {# comments}}",
+    "hiddenLabel": "Hidden",
+    "empty": "No comments yet. Be the first.",
+    "signInToComment": "Sign in to join the discussion.",
+    "label": "Your comment",
+    "placeholder": "Share your thoughts…",
+    "hint": "Plain text. Be kind.",
+    "error": "{error, select, tooLong {That's too long (2,000 characters max).} tooFast {You're commenting too fast. Try again in a few minutes.} signedOut {Sign in to comment.} other {Couldn't post your comment. Please try again.}}",
+    "post": "Post",
+    "hide": "Hide",
+    "unhide": "Unhide",
+    "delete": "Delete",
+    "confirmDelete": "Delete for good",
+    "cancel": "Cancel"
+  },
+  "Notes": {
+    "title": "Notes",
+    "intro": "Private notes, visible only to you. They live in the content repo's notes/ folder and are never published.",
+    "notSaved": "Not saved yet",
+    "delete": "Delete note",
+    "confirmDelete": "Delete note and its images",
+    "slugTaken": "A note with that slug already exists.",
+    "newSlug": "New note slug",
+    "new": "New note",
+    "search": "Search notes…",
+    "noMatches": "No notes match.",
+    "empty": "No notes yet."
+  },
+  "Analytics": {
+    "title": "Analytics",
+    "viewsWindow": "Views, last {days} days",
+    "viewsAllTime": "Views, all time",
+    "ratings": "Ratings",
+    "average": "{rating} average",
+    "comments": "Comments",
+    "readers": "Accounts",
+    "dailyViews": "Views per day, last {days} days",
+    "viewCount": "{count, plural, one {# view} other {# views}}",
+    "byLanguage": "Views by language",
+    "noData": "No views yet.",
+    "topViewed": "Most viewed, last {days} days",
+    "kind": "{kind, select, article {Article} post {Post} other {Series}}",
+    "topRated": "Top rated",
+    "noRatings": "No piece has enough ratings yet.",
+    "recentComments": "Recent comments",
+    "noComments": "No comments yet.",
+    "hidden": "hidden"
   }
 }

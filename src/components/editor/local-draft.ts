@@ -7,9 +7,9 @@ import type { EditorDoc } from "@/lib/editor/format";
  * unavailable (private windows, blocked site data).
  */
 
-export interface LocalDraft {
-  doc: EditorDoc;
-  /** The branch head the edits were made on (null: not saved to a branch yet). */
+export interface LocalDraft<T = EditorDoc> {
+  doc: T;
+  /** The version the edits were made on: a branch head, or a note's file shas (null: never saved). */
   head: string | null;
   savedAt: number;
 }
@@ -39,6 +39,6 @@ async function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => I
   }
 }
 
-export const readLocalDraft = (key: string) => run<LocalDraft | undefined>("readonly", (s) => s.get(key));
-export const writeLocalDraft = (key: string, draft: LocalDraft) => run("readwrite", (s) => s.put(draft, key));
+export const readLocalDraft = <T = EditorDoc>(key: string) => run<LocalDraft<T> | undefined>("readonly", (s) => s.get(key));
+export const writeLocalDraft = <T = EditorDoc>(key: string, draft: LocalDraft<T>) => run("readwrite", (s) => s.put(draft, key));
 export const clearLocalDraft = (key: string) => run("readwrite", (s) => s.delete(key));

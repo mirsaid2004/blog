@@ -141,6 +141,16 @@ same installation token to **write**. Code: `src/lib/editor/`.
   their frontmatter; when the original changes, the translation shows as
   outdated in the editor and in the `/admin` matrix.
 
+### Phase 6: notes and scheduled publishing
+
+- **Notes** (`/admin/notes`) are files under `notes/<slug>/` on `main`, written
+  directly with the same commit mechanism (no draft branch). The sync ignores
+  that folder. Commits are named "Update note …" / "Delete note …".
+- **Scheduled publishing** keeps the draft branch as is until its time; the
+  hourly job then publishes it exactly like the Publish button. Editing the
+  draft after scheduling is fine: whatever is saved on the branch at that hour
+  goes live.
+
 ### Rate limits
 
 An installation token allows about 5,000 API requests per hour. Pages never

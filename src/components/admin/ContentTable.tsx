@@ -1,5 +1,5 @@
-import { getTranslations } from "next-intl/server";
-import { GitBranch, Plus } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
+import { CalendarClock, GitBranch, Plus } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { routing } from "@/i18n/routing";
 import type { CellStatus, Overview } from "@/lib/editor/overview";
@@ -14,7 +14,7 @@ const CELL: Record<CellStatus, string> = {
 
 /** Translation matrix: one row per piece, one column per language. */
 export async function ContentTable({ overview }: { overview: Overview }) {
-  const t = await getTranslations("Editor");
+  const [t, format] = await Promise.all([getTranslations("Editor"), getFormatter()]);
 
   return (
     <section className="mt-8 rounded-2xl border border-border/60 bg-card/60 p-6">
@@ -28,6 +28,26 @@ export async function ContentTable({ overview }: { overview: Overview }) {
           {t("newPiece")}
         </Link>
       </div>
+
+      {overview.scheduled.length > 0 && (
+        <div className="mb-6">
+          <h3 className="mb-2 text-sm font-semibold">{t("scheduledList")}</h3>
+          <ul className="space-y-1.5">
+            {overview.scheduled.map((s) => (
+              <li key={`${s.folder}/${s.slug}`} className="flex flex-wrap items-center gap-2 text-sm">
+                <CalendarClock size={14} className="text-primary" />
+                <Link href={`/admin/edit/${s.folder}/${s.slug}`} className="font-mono text-xs hover:text-primary">
+                  {s.folder}/{s.slug}
+                </Link>
+                <span className="text-muted-foreground">
+                  {format.dateTime(new Date(s.publishAt), { dateStyle: "medium", timeStyle: "short" })}
+                </span>
+                {s.lastError && <span className="text-xs text-destructive">{t("scheduleFailed", { error: s.lastError })}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {overview.newDrafts.length > 0 && (
         <div className="mb-6">

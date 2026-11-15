@@ -1,6 +1,6 @@
 # Development Plan — M_DEV Blog
 
-_Last updated: 2026-11-14_
+_Last updated: 2026-11-16_
 
 ## Goals
 
@@ -119,7 +119,7 @@ Each `<locale>.mdx` holds what differs per language:
 ---
 title: Осваиваем распределённые саги
 summary: …
-status: published        # draft | published, per language (scheduled comes in Phase 6)
+status: published        # draft | published, per language (to publish later, schedule the draft; see 2.2)
 translatedFrom: 4e1b9c2  # optional: git sha of the source file this translation is based on
 ---
 
@@ -388,11 +388,12 @@ asset         (key PK, content_id, draft_branch, bucket, bytes, created_at, publ
 
 ### 2.7 Notes (private)
 
-- Store notes in a separate private repo (`blog-notes`), or in the content repo under `notes/`, which the webhook never indexes as public.
-- Serve them only under `/admin/notes`, behind the server-side admin check.
-- Use the same editor and pipeline, with no ratings or views. Notes can be committed directly, without a draft branch, since they are never published.
-- Use the same layout as public content: `notes/<slug>/meta.yml` + `en.mdx` / `ru.mdx` / `uz.mdx`, written in whichever languages you like.
-- Note images go to the private `mdev-blog-private` bucket and are deleted with the note.
+Built in Phase 6:
+
+- Notes live in the content repo under `notes/<slug>/` (`meta.yml` with `id`, `originalLocale`, `tags`, plus one `<locale>.mdx` per language with just a `title`). The sync only reads `articles/`, `posts/` and `series/`, so notes never reach the public index.
+- They're listed and edited only under `/admin/notes`, behind the server-side admin check.
+- They're committed straight to `main` (no draft branch, status, ratings or views). A save names the blob shas it started from and is refused if the note changed elsewhere since.
+- Note images go to the private `mdev-blog-private` bucket under `notes/<id>/`, are served through the admin-only `/api/notes/assets/…` route (a redirect to a five-minute signed URL), and are deleted with the note.
 
 ### 2.8 The MDX editor
 
@@ -420,6 +421,14 @@ Features in priority order:
 6. **Series builder:** search and pick existing articles and posts, reorder by drag and drop, see each item's status (draft items are marked as hidden until published), and warn about dangling ids. It writes the `items` list in the series `meta.yml`.
 7. Scheduled publishing (a cron job merges the draft branch at `publishedAt`) and a diff against `main` before publish.
 
+### 2.9 Scheduled publishing, comments and analytics
+
+Built in Phase 6:
+
+- **Scheduled publishing.** "Schedule" in the editor stores the time in the Neon `scheduled_publish` table (and moves the piece's `publishedAt` to that day on the draft). An hourly Netlify scheduled function calls `/api/cron/publish`, which publishes due drafts with the same validation and merge as the Publish button. A failure is stored on the row, shown in the editor and `/admin`, and retried the next hour.
+- **Comments.** Signed-in readers post plain-text comments (2,000 characters, at most 5 per 10 minutes) that show immediately. Authors can delete their own; the admin can hide (kept, admin-only) or delete any, on the page or in `/admin/analytics`.
+- **Analytics.** `/admin/analytics`: views for the last 30 days and all time, daily views, views by language, most viewed and top-rated pieces, and recent comments with moderation.
+
 ---
 
 ## 3. Phased roadmap
@@ -432,7 +441,7 @@ Features in priority order:
 | **3. Auth** (~3 days) | Better Auth with GitHub and Google, user menu, admin allowlist, guarded `/admin`. | You're admin and others are readers. |
 | **4. Engagement** (~3–4 days) | Views with dedupe, ratings, stats on cards, "Top Picks" ranked by real data, Postgres search. | The numbers on the cards are real. |
 | **5. Editor v1** (~2 weeks) | CodeMirror editor, live preview, language tabs and translate mode, translation matrix and outdated flags, IndexedDB autosave, draft branches (Save / idle commit), Publish as a merge into `main`, drafts list, history and diff panel, image upload to R2, Discard draft with image cleanup, orphan sweeper. | You can write, revisit history, publish and discard without opening VS Code, and discarded drafts leave nothing behind in R2. |
-| **6. Notes and polish** | Private notes, scheduled publishing, analytics dashboard in `/admin`, optional comments. | — |
+| **6. Notes and polish** | Private notes, scheduled publishing, analytics dashboard in `/admin`, comments (see 2.7 and 2.9). | Notes, schedules and comments work end to end; the numbers are visible in `/admin/analytics`. |
 
 Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline are the core of the product. Building them against local files means Phase 2 only replaces where content comes from.
 
@@ -441,12 +450,12 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 ## 4. Open decisions
 
 - [x] **Content language.** Decided: any piece can be written in en, ru and/or uz, as `<type>/<slug>/meta.yml` plus one `<locale>.mdx` per language (see [2.1.1](#211-multilingual-content)).
-- [ ] **Shared or per-language slugs?** One shared Latin slug for all languages (recommended), or optional localized slugs per language.
+- [x] **Shared or per-language slugs?** Decided (built): one shared Latin slug for all languages. Per-language slugs remain a possible later addition.
 - [x] **Lists in a locale.** Decided: every published piece appears in every language's lists. A card shows which languages the piece is in when the reader's language is missing. Opening it shows a published version straight away, with a notice and buttons for the available languages. The notice says the reader's translation is "coming soon" only when that translation exists as a draft.
 - [x] **Series model.** Decided: a series is an ordered list of existing articles and posts, which can be mixed (see [2.1.2](#212-series-model)).
 - [x] **One series or several per piece?** Decided: several are allowed, though it will be rare. The `?series=` link decides which banner a reader sees.
-- [ ] **Post versus article.** If a post is a short note with no cover or table of contents, keep one `content` table with a `type` column.
-- [ ] **Publish merge style.** A merge commit keeps the full draft history reachable from `main` (recommended, since you want searchable history). A squash merge keeps `main` cleaner but leaves the history only on the draft branch. It also changes which images count as published (see [2.3](#23-media-cloudflare-r2)).
+- [x] **Post versus article.** Decided (built): one `content_items` table with a `kind` column (`article`, `post`, `series`). Articles show a cover; posts are text-first.
+- [x] **Publish merge style.** Decided (built): merge commit. A merge commit keeps the full draft history reachable from `main` (recommended, since you want searchable history). A squash merge keeps `main` cleaner but leaves the history only on the draft branch. It also changes which images count as published (see [2.3](#23-media-cloudflare-r2)).
 - [ ] **Image domain.** Pick the R2 custom domain, for example `img.<your-domain>`.
 - [x] **Hosting.** Decided: Netlify. Its Next.js runtime handles ISR and `revalidateTag`; the daily job is a Netlify Scheduled Function that calls `/api/cron/daily`.
 
@@ -467,6 +476,167 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 | Editor | CodeMirror 6 + live MDX preview |
 | Media | Cloudflare R2: `mdev-blog` (public, custom domain) and `mdev-blog-private` (private); content-hashed immutable keys; `asset` table for cleanup |
 | Hosting | Netlify (Next.js runtime, Scheduled Functions) |
+
+---
+
+## 6. Remaining work
+
+Phases 0–6 are built. This is what's left, so it can be picked up later.
+Check items off here as they're done.
+
+### 6.1 Production test plan (after the first Netlify deploy)
+
+Run this on `https://blog.mirsaidmirakhmedov.uz` after the first deploy, and
+again after big changes. Use throwaway content (e.g. a post `zz-test`) and
+delete it afterwards. Open an incognito window for the "reader" and
+"signed-out" checks, and keep Netlify **Logs → Functions** open to catch
+server errors.
+
+**Deploy and configuration**
+
+- [ ] The build passes the secrets scan (`netlify.toml` omits the four non-secret keys) and no real secret appears in the build output.
+- [ ] Every variable from `.env.example` is set in Netlify with its production value; `NEXT_PUBLIC_SITE_URL` and `BETTER_AUTH_URL` are the production URL.
+- [ ] `GITHUB_APP_PRIVATE_KEY` works as pasted (the admin "Sync now" button succeeds).
+- [ ] Migrations `0000`–`0004` are applied to the production database (`npm run db:migrate` against it, if it's a separate Neon branch).
+
+**Public pages and SEO**
+
+- [ ] `/`, `/uz`, `/ru`, `/en` and each list page (articles, posts, series) load in all three languages; the default locale (uz) redirect works.
+- [ ] An article, a post and a series page render: MDX, code highlighting, tables, images, TOC (desktop rail and mobile), series banner and previous/next.
+- [ ] Language fallback: open a piece in a language it lacks; the notice shows, the canonical points at the original, and the page is `noindex`.
+- [ ] `robots.txt`, `sitemap.xml` (all published translations with alternates) and `/<locale>/rss.xml` are valid; `/api/` and `/*/admin` are disallowed.
+- [ ] Open Graph images render for the home, a list and a piece (check with a link preview tool or by opening the `opengraph-image` URL).
+- [ ] 404 page for an unknown slug, and the error page doesn't leak details.
+- [ ] Dark and light theme, and phone width (no horizontal scroll, navbar and mobile menu work).
+
+**Content pipeline**
+
+- [ ] **Webhook:** push a one-line change to a published piece in `blog-db`; the GitHub App's "Recent deliveries" shows 200, and the page shows the change within seconds without a redeploy. This confirms `revalidateTag` and `unstable_cache` work on Netlify's runtime; if not, switch the content cache to `"use cache"` + `cacheTag` or use Netlify's on-demand purge.
+- [ ] **Invalid content:** push a piece with a broken frontmatter field; the site keeps the previous version and `/admin` lists the rejected file. Fix it and the error clears.
+- [ ] **Deletion:** delete a throwaway piece's folder on main; it disappears from lists, sitemap and RSS.
+- [ ] Webhook signature: a request to `/api/webhooks/github` without a valid signature is rejected.
+
+**Auth**
+
+- [ ] Sign in with GitHub and with Google on the production domain; sign out; the menu shows the right account.
+- [ ] The same email via both providers ends up as one account.
+- [ ] As a non-admin reader, `/admin`, `/admin/analytics`, `/admin/notes` and `/admin/edit/…` return 404; signed out, they show the sign-in prompt.
+- [ ] Admin server actions can't be called by a reader (e.g. replaying a save request from the browser's network tab as a reader fails).
+
+**Views, ratings and search**
+
+- [ ] Opening a piece counts one view; reloading the same day doesn't count again; the number shows on cards after the cache window.
+- [ ] A bot user agent (e.g. `curl -A Googlebot`) doesn't count.
+- [ ] Rate a piece, change the rating, remove it; the average shows only from 3 ratings on. Signed out, the stars ask you to sign in.
+- [ ] Hero search finds pieces by title and body words in en, ru and uz, including prefixes; the reader's language ranks first.
+- [ ] Top Picks and "most viewed" reflect real numbers.
+
+**Comments**
+
+- [ ] Post a comment as a reader: it appears immediately; HTML is shown as text; line breaks are kept.
+- [ ] The 6th comment within 10 minutes is refused with the "too fast" message; 2,001 characters are refused.
+- [ ] The author can delete their own comment; another reader can't delete or hide it.
+- [ ] As admin: hide (reader no longer sees it, admin sees it dimmed), unhide, delete — on the page and in `/admin/analytics`.
+
+**Editor (articles, posts, series)**
+
+- [ ] Create a new post, write in two languages, paste and drop an image, insert a `/image` snippet; the preview matches the published page.
+- [ ] Save, keep typing, and wait a minute: the idle auto-save commits to `draft/posts/<slug>` (check the branch on GitHub).
+- [ ] Reload with unsaved edits: the "restore unsaved changes" banner appears and works.
+- [ ] Two tabs on the same draft: saving in one makes the other's save fail with a reload message (no overwrite).
+- [ ] History: restore an older version of a file, save, and see it in the diff.
+- [ ] Translate mode: change the original after a translation is marked up to date; the translation shows "possibly outdated", the diff, and the `/admin` matrix shows "outdated".
+- [ ] Publish: the piece goes live within seconds, the branch is deleted, images now count as published, and the "View on site" link works.
+- [ ] Edit a published piece in VS Code on main while a draft exists: the editor offers "Update from main" and it merges.
+- [ ] Discard a draft that uploaded images: the branch is gone and those images return 404 from the image domain; images of the published version still load.
+- [ ] Series: build a series from existing pieces, reorder, publish; an unpublished part is hidden from readers; an unknown id shows a warning but doesn't break the page.
+- [ ] A piece too large or slow to publish within Netlify's function limit (try a long article with many code blocks). If it times out, raise the limit or move the post-merge sync to a background function, since the webhook re-syncs anyway.
+
+**Scheduled publishing**
+
+- [ ] Schedule a draft for the next hour: the editor banner and `/admin` show the time, and `publishedAt` moved to that day.
+- [ ] After the next hourly run, the piece is live and the schedule is gone (check `scheduled-publish` in Logs → Functions).
+- [ ] Schedule a draft with a validation error: the run records the error, it's shown in the editor and `/admin`, and it publishes on the next run after you fix and save it.
+- [ ] Cancel a schedule, and discard a scheduled draft: neither publishes.
+- [ ] Times are right across time zones: schedule in your local time and confirm it went live at that local time.
+
+**Notes**
+
+- [ ] Create a note, add a second language, paste an image, save; it appears in `/admin/notes` and under `notes/` on main in `blog-db`.
+- [ ] Reload: the note image loads (private bucket through `/api/notes/assets`). Opening that image URL signed out or as a reader returns 404, and the raw R2 URL isn't publicly readable.
+- [ ] Notes never appear on the public site, in search, the sitemap or RSS.
+- [ ] Delete the note: its files are gone from main and its images are deleted from the private bucket.
+
+**Scheduled jobs and maintenance**
+
+- [ ] `daily-maintenance` and `scheduled-publish` are listed under Functions; "Run now" on each returns success in the logs.
+- [ ] `/api/cron/daily`, `/api/cron/publish` and `/api/content/sync` return 401 without the `CRON_SECRET` bearer token.
+- [ ] After a daily run: view events older than 90 days are pruned, and an image uploaded to a draft but never saved is removed after a day.
+
+**Analytics**
+
+- [ ] `/admin/analytics` numbers match what you did above (views, ratings, comments, accounts); the daily chart tooltips show the right dates; views by language add up.
+
+**Performance and limits (baseline before optimising, see 6.4)**
+
+- [ ] Lighthouse / PageSpeed for home, an article and a list page (mobile and desktop): record LCP, CLS, INP and the scores.
+- [ ] First request after the site has been idle (Neon cold start, function cold start): note how long it takes.
+- [ ] Netlify usage after a few days: function invocations, bandwidth and image transformations, against the plan's limits; R2 storage and operations; GitHub App API usage (5,000 requests/hour).
+
+### 6.2 Setup and content leftovers
+
+- [ ] **Image domain.** Put the public bucket behind a custom domain (for example `img.mirsaidmirakhmedov.uz`), update `NEXT_PUBLIC_ASSETS_URL` and `images.remotePatterns`, and add a Cloudflare cache rule `Cache-Control: public, max-age=31536000, immutable` (uploads don't set it per object; see 2.3).
+- [ ] **`next/image` and Netlify Image CDN.** Decide whether R2 images go through Netlify's image optimization (counts against its limits) or are served as uploaded (`unoptimized`), since uploads are already resized to 1600px WebP.
+- [ ] **Google site verification.** Add the `verification.google` token in `src/app/[locale]/layout.tsx` when Search Console is set up.
+- [ ] **`twitter:creator`.** Confirm or replace the `@mirsaid_dev` placeholder in `src/app/[locale]/layout.tsx`.
+- [ ] **README.** Replace the create-next-app boilerplate with a short project intro that links to `doc/`.
+- [ ] **Translations.** Have a native speaker proofread the ru and uz UI strings (`src/translations/`), especially the Editor, Comments, Notes and Analytics namespaces.
+- [ ] **Existing translations' `translatedFrom`.** Translations written before Phase 5 have no `translatedFrom`, so they're never flagged as outdated. Open each and use "Mark as up to date" once.
+- [ ] **Replace the seed content.** The articles in `blog-db` are sample content with placeholder covers (some are external URLs). Replace or delete them before launch.
+
+### 6.3 Unfinished features
+
+- [ ] **Hero category chips and tabs.** The chips in `src/components/home/hero/HeroFilterings.tsx` (`FILTER_CATEGORIES`) and the tabs don't do anything yet. Decide what they mean (tags? type? sort?) and wire them to `?q=`/filters like the archive pages.
+- [ ] **Series builder drag and drop.** Parts are reordered with up/down buttons (`SeriesItems.tsx`); add drag and drop if it feels slow.
+- [ ] **Renaming a slug.** The editor treats the slug as fixed. Renaming means moving the folder on a draft branch (and redirecting the old URL).
+- [ ] **Hard-delete a published piece** ("purge", see 2.3): delete its files from main, its `content/<id>/` images, and optionally its stats and comments.
+- [ ] **Comment extras** (optional): replies, pagination beyond the first 500, an "edited" state, notifying the admin of new comments, and a report button.
+- [ ] **Notes extras** (optional): full-text search inside note bodies (today the list searches titles, slugs and tags), and links between notes.
+- [ ] **Account deletion.** If readers can ever delete their account, recompute `content_stats` for the pieces they rated (deleting a user cascades to ratings and comments without recomputing totals; see `src/lib/engagement/ratings.ts`).
+- [ ] **Analytics extras** (optional): referrers, per-piece trend, CSV export. Views older than 90 days only exist as totals.
+
+### 6.4 Performance
+
+- [ ] **Measure first.** Run Lighthouse / PageSpeed on the home, an article and a list page on production, and check Netlify's function logs for slow requests and Neon cold starts.
+- [ ] **Static rendering for public pages.** Detail and list pages are dynamic (ƒ) because they read the session (ratings, comments) during render. Move the per-viewer parts behind client components or Suspense boundaries fed by a route or action, so the page shell can be cached or prerendered (Next 16 Cache Components / Partial Prerendering).
+- [ ] **`"use cache"` instead of `unstable_cache`.** Move `src/lib/content/source.ts` and `stats.ts` to `"use cache"` + `cacheTag`/`cacheLife`.
+- [ ] **Neon cold starts.** On the free tier the first query after idle can take seconds. Keep stats reads cached (they are, for 5 minutes), and consider a Neon plan without scale-to-zero, or a warm-up ping, if it shows up in real use.
+- [ ] **Client JavaScript on public pages.** Audit the bundle (`next build` output, `@next/bundle-analyzer`). The heavy visual effects (`react-bits`, `ogl`, light rays, framer-motion) should load lazily or only on the home page, and respect `prefers-reduced-motion`.
+- [ ] **Editor bundle.** `@codemirror/language-data` loads code-block languages on demand already; check the admin bundle size and lazy-load the editor route's heavy parts if needed. Admin-only, so lower priority.
+- [ ] **MDX compile cost.** Bodies are compiled on every request. Cache the compiled output per (piece, locale, body sha), or precompile during sync.
+- [ ] **Shiki.** Syntax highlighting runs at render time; make sure only the needed themes and languages load.
+- [ ] **Images.** Covers use `sizes`; check LCP on article pages (cover `priority`), and use `fetchPriority` correctly.
+- [ ] **Preview requests.** The live preview calls a server action 600 ms after typing stops, and server actions run one at a time, so a slow save can delay the preview. If it bothers you, move preview to a route handler.
+
+### 6.5 UI and UX
+
+- [ ] **Hero search and filters.** Wire the chips (6.3), and show result counts and a clear button.
+- [ ] **Empty and loading states.** Skeletons for lists and the comments section (currently `Suspense fallback={null}`).
+- [ ] **Accessibility pass.** Keyboard and screen-reader check of the navbar, user menu, TOC, rating stars, comments and the editor; colour contrast in both themes.
+- [ ] **Mobile editor.** The editor works best on wide screens; on phones, stack the preview under the body or put it behind a toggle.
+- [ ] **Editor polish.** A toolbar for common formatting, a word count, a fullscreen/zen mode, a confirm when leaving with a pending upload, and inline display of save conflicts with a diff.
+- [ ] **Admin dashboard.** Pagination and filters for the content matrix (by type, language status, has draft), and links to the live page per row.
+- [ ] **Comment UX.** Show the reader's own new comment instantly (optimistic) instead of after the refresh, and highlight the comment from a `#comment-…` link.
+- [ ] **Reading experience.** Reading progress bar, copy button on code blocks, image zoom, "next in series" at the end, related pieces by tag.
+- [ ] **Consistent design tokens.** Some components still use hard-coded colours (amber/emerald/orange status chips, gradients); move them to theme tokens.
+
+### 6.6 Engineering
+
+- [ ] **Automated tests.** There are none yet. Start with unit tests for `parse.ts`, `editor/format.ts` (round trips, `gitBlobSha`), `notes/format.ts` and the comment/rating rules, then a Playwright smoke test (home, article, sign-in mock, editor save on a test branch).
+- [ ] **CI.** Run lint, typecheck and tests on pull requests (today only the local pre-commit hook runs lint and build).
+- [ ] **Error monitoring.** Add error reporting (for example Sentry) for server actions, the webhook and the cron routes, since their failures are otherwise only in Netlify logs.
+- [ ] **Separate development database.** If local development and production point at the same Neon database (as `.env` does during development), create a Neon branch for development so tests and experiments don't touch real data.
+- [ ] **Rate-limit public endpoints.** `/api/views` and the comment/rating actions rely on dedupe and per-user limits; add an IP-based limit (Netlify or a small Neon/Upstash counter) if abuse appears.
 
 ---
 

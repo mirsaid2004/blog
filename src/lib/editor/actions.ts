@@ -8,10 +8,9 @@ import { mdxComponents } from "@/components/article/mdx-components";
 import { requireAdmin } from "@/lib/auth";
 import { compileMdx } from "@/lib/content/mdx";
 import { CONTENT_TAG } from "@/lib/content/source";
-import { syncContent } from "@/lib/content/sync";
 import { db, schema } from "@/lib/db";
-import { IMAGE_TYPES, MAX_IMAGE_BYTES, deleteUnpublished, markPublished, prepareUpload, type UploadTicket } from "./assets";
-import { draftBranch, FOLDERS, kindOf, SLUG, type Folder } from "./format";
+import { IMAGE_TYPES, MAX_IMAGE_BYTES, deleteUnpublished, prepareUpload, type UploadTicket } from "./assets";
+import { draftBranch, FOLDERS, kindOf, parseDoc, serializeMeta, SLUG, type Folder } from "./format";
 import {
   blobText,
   branchHead,
@@ -25,7 +24,7 @@ import {
   readPiece,
   type HistoryEntry,
 } from "./repo";
-import { validatePiece } from "./validate";
+import { clearSchedule, publishBranch, setSchedule } from "./publish";
 
 /**
  * Server actions behind the editor. Every one checks the admin session first:
@@ -74,31 +73,65 @@ export async function saveDraft(input: z.input<typeof saveInput>): Promise<Resul
  * Validate the saved draft, merge it into main, then index it right away
  * (the webhook would too, a few seconds later).
  */
-export async function publishDraft(
-  input: z.input<typeof piece> & { expectedHead: string }
-): Promise<Result<{ issues?: string[] }>> {
+export async function publishDraft(input: z.input<typeof piece> & { expectedHead: string }): Promise<Result> {
   try {
     await requireAdmin();
     const { folder, slug } = piece.parse(input);
-    const expectedHead = SHA.parse(input.expectedHead);
-    const branch = draftBranch(folder, slug);
-    const head = await branchHead(branch);
-    if (head !== expectedHead) {
-      return { ok: false, error: "The draft changed somewhere else. Reload before publishing.", conflict: true };
-    }
-
-    const files = await readPiece(folder, slug, head);
-    const { errors } = await validatePiece(folder, slug, files);
-    if (errors.length) {
-      return { ok: false, error: errors.map((e) => `${e.path}: ${e.message}`).join("\n") };
-    }
-
-    await merge(MAIN, branch, `Publish ${folder}/${slug}`);
-    await markPublished(branch);
-    await deleteBranch(branch);
-    await syncContent();
+    await publishBranch(folder, slug, SHA.parse(input.expectedHead));
     updateTag(CONTENT_TAG);
     return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+const scheduleInput = piece.extend({
+  publishAt: z.iso.datetime({ offset: true }).nullable(),
+  /** The date the reader sees (YYYY-MM-DD, in the admin's time zone). */
+  publishDate: z.iso.date().optional(),
+  expectedHead: SHA.optional(),
+});
+
+/**
+ * Set (or with null, cancel) the time a saved draft goes live. If the piece's
+ * publish date differs from the scheduled day, the draft's meta.yml is updated
+ * first, and the new head is returned.
+ */
+export async function scheduleDraft(input: z.input<typeof scheduleInput>): Promise<Result<{ head?: string }>> {
+  try {
+    const viewer = await requireAdmin();
+    const { folder, slug, publishAt, publishDate, expectedHead } = scheduleInput.parse(input);
+    if (publishAt === null) {
+      await clearSchedule(folder, slug);
+      return { ok: true };
+    }
+    const at = new Date(publishAt);
+    if (at.getTime() < Date.now() - 60_000) return { ok: false, error: "That time is in the past." };
+    const branch = draftBranch(folder, slug);
+    let head = await branchHead(branch);
+    if (!head) return { ok: false, error: "Save the draft before scheduling it." };
+    if (expectedHead && head !== expectedHead) {
+      return { ok: false, error: "The draft changed somewhere else. Reload first.", conflict: true };
+    }
+
+    let newHead: string | undefined;
+    if (publishDate) {
+      const files = await readPiece(folder, slug, head);
+      const doc = parseDoc(files, "en");
+      if (doc.meta.publishedAt !== publishDate) {
+        head = await commitToDraft({
+          folder,
+          slug,
+          expectedHead: head,
+          changes: { "meta.yml": serializeMeta({ ...doc.meta, publishedAt: publishDate }, kindOf(folder)) },
+          message: `Schedule ${folder}/${slug} for ${publishDate}`,
+          author: { name: viewer.name, email: viewer.email },
+        });
+        newHead = head;
+      }
+    }
+    await setSchedule(folder, slug, at);
+    return { ok: true, ...(newHead ? { head: newHead } : {}) };
   } catch (error) {
     return fail(error);
   }
@@ -111,6 +144,7 @@ export async function discardDraft(input: z.input<typeof piece>): Promise<Result
     const { folder, slug } = piece.parse(input);
     const branch = draftBranch(folder, slug);
     await deleteBranch(branch);
+    await clearSchedule(folder, slug);
     return { ok: true, deletedImages: await deleteUnpublished(branch) };
   } catch (error) {
     return fail(error);

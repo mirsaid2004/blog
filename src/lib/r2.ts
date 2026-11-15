@@ -1,4 +1,4 @@
-import { DeleteObjectsCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -23,6 +23,12 @@ function r2(): S3Client {
 }
 
 export const publicBucket = () => required("R2_PUBLIC_BUCKET");
+export const privateBucket = () => required("R2_PRIVATE_BUCKET");
+
+/** A short-lived URL to read a private object (note images, admin only). */
+export function presignGet(bucket: string, key: string, expiresIn = 300): Promise<string> {
+  return getSignedUrl(r2(), new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn });
+}
 
 export async function objectExists(bucket: string, key: string): Promise<boolean> {
   try {

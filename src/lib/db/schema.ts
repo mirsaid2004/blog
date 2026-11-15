@@ -233,3 +233,49 @@ export const asset = pgTable(
   },
   (t) => [index("asset_draft_branch").on(t.draftBranch), index("asset_content_id").on(t.contentId)]
 );
+
+// --- Phase 6 --------------------------------------------------------------------------
+
+/**
+ * Reader comments: plain text, shown as soon as they're posted. The admin can
+ * hide a comment (kept, but shown only to the admin) or delete it; authors can
+ * delete their own. Deleting a user deletes their comments.
+ */
+export const comment = pgTable(
+  "comment",
+  {
+    id: text("id").primaryKey(),
+    contentId: text("content_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    /** The language the reader was viewing, for the admin. */
+    locale: text("locale").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    hiddenAt: timestamp("hidden_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("comment_content_created").on(t.contentId, t.createdAt),
+    index("comment_user_created").on(t.userId, t.createdAt),
+    check("comment_body_length", sql`char_length(${t.body}) between 1 and 2000`),
+  ]
+);
+
+/**
+ * Drafts waiting to be published at a set time. An hourly job publishes the
+ * ones that are due with the same checks as the Publish button; whatever is on
+ * the draft branch at that moment is what goes live.
+ */
+export const scheduledPublish = pgTable(
+  "scheduled_publish",
+  {
+    folder: text("folder", { enum: ["articles", "posts", "series"] }).notNull(),
+    slug: text("slug").notNull(),
+    publishAt: timestamp("publish_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Set when a due publish failed (e.g. invalid content); it's retried every hour. */
+    lastError: text("last_error"),
+  },
+  (t) => [primaryKey({ columns: [t.folder, t.slug] }), index("scheduled_publish_at").on(t.publishAt)]
+);

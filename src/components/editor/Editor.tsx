@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Check,
+  CalendarClock,
   CloudUpload,
   ExternalLink,
   GitBranch,
@@ -21,7 +22,17 @@ import {
 import { Link, routing, useRouter } from "@/i18n/routing";
 import { assetUrl } from "@/lib/assets";
 import { parseContent } from "@/lib/content/parse";
-import { discardDraft, loadBlob, publishDraft, saveDraft, updateDraftFromMain } from "@/lib/editor/actions";
+import {
+  discardDraft,
+  loadBlob,
+  loadHistory,
+  loadVersion,
+  requestUpload,
+  publishDraft,
+  saveDraft,
+  scheduleDraft,
+  updateDraftFromMain,
+} from "@/lib/editor/actions";
 import {
   changedFiles,
   draftBranch,
@@ -40,7 +51,7 @@ import { cn } from "@/lib/utils";
 import CodeEditor, { type CodeEditorHandle } from "./CodeEditor";
 import DiffView from "./DiffView";
 import HistoryPanel from "./HistoryPanel";
-import { imgTag, uploadImage } from "./images";
+import { imgTag, uploadImage, type RequestTicket } from "./images";
 import { clearLocalDraft, readLocalDraft, writeLocalDraft, type LocalDraft } from "./local-draft";
 import Preview from "./Preview";
 import SeriesItems, { type PickablePiece } from "./SeriesItems";
@@ -61,6 +72,8 @@ export interface EditorProps {
   pieces: PickablePiece[];
   /** Just published (the page reloaded with `?published=1`). */
   justPublished?: boolean;
+  /** When the draft is scheduled to go live (ISO), and the last failed attempt's error. */
+  schedule: { publishAt: string; lastError: string | null } | null;
 }
 
 type Panel = "preview" | "original" | "changes" | "history";
@@ -91,6 +104,7 @@ export default function Editor({
   mainChanges,
   pieces,
   justPublished = false,
+  schedule: initialSchedule,
 }: EditorProps) {
   const t = useTranslations("Editor");
   const uiLocale = useLocale();
@@ -113,7 +127,9 @@ export default function Editor({
   const [active, setActive] = useState<Locale>(initialDoc.meta.originalLocale);
   const [panel, setPanel] = useState<Panel>("preview");
   const [busy, setBusy] = useState<null | "save" | "publish" | "discard" | "merge">(null);
-  const [confirm, setConfirm] = useState<null | "publish" | "discard" | `remove-${string}`>(null);
+  const [confirm, setConfirm] = useState<null | "publish" | "schedule" | "discard" | `remove-${string}`>(null);
+  const [schedule, setSchedule] = useState(initialSchedule);
+  const [when, setWhen] = useState("");
   const [notice, setNotice] = useState<Notice>(() =>
     justPublished
       ? {
@@ -309,6 +325,46 @@ export default function Editor({
     router.refresh();
   }
 
+  /** `YYYY-MM-DDTHH:mm` for a datetime-local input, in the browser's time zone. */
+  const localInput = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  function openSchedule() {
+    const next = new Date();
+    next.setHours(next.getHours() + 1, 0, 0, 0);
+    setWhen(schedule ? localInput(new Date(schedule.publishAt)) : localInput(next));
+    setConfirm("schedule");
+  }
+
+  async function confirmSchedule() {
+    const at = new Date(when);
+    if (Number.isNaN(at.getTime())) return;
+    const publishDate = when.slice(0, 10);
+    setBusy("publish");
+    const result = await scheduleDraft({ folder, slug, publishAt: at.toISOString(), publishDate, expectedHead: head ?? undefined });
+    setBusy(null);
+    if (!result.ok) return setNotice({ tone: "error", text: result.error });
+    setConfirm(null);
+    setSchedule({ publishAt: at.toISOString(), lastError: null });
+    if (result.head) {
+      // The server moved the publish date to the scheduled day and committed it.
+      const next = { ...doc, meta: { ...doc.meta, publishedAt: publishDate } };
+      setHead(result.head);
+      setDoc(next);
+      setBaseline(serializeDoc(next, kind));
+    }
+  }
+
+  async function cancelSchedule() {
+    setBusy("publish");
+    const result = await scheduleDraft({ folder, slug, publishAt: null });
+    setBusy(null);
+    if (!result.ok) return setNotice({ tone: "error", text: result.error });
+    setSchedule(null);
+  }
+
   async function mergeMain() {
     setBusy("merge");
     const result = await updateDraftFromMain({ folder, slug });
@@ -319,13 +375,13 @@ export default function Editor({
 
   // --- images -------------------------------------------------------------------
 
-  const target = { folder, slug, contentId: doc.meta.id };
+  const requestTicket: RequestTicket = (image) => requestUpload({ folder, slug, contentId: doc.meta.id, ...image });
 
   async function insertImages(files: File[], pos: number) {
     setUploads((n) => n + files.length);
     for (const file of files) {
       try {
-        const image = await uploadImage(file, target);
+        const image = await uploadImage(file, requestTicket);
         editorRef.current?.insert(`${imgTag(image)}\n`, pos);
       } catch (error) {
         setNotice({ tone: "error", text: (error as Error).message });
@@ -338,7 +394,7 @@ export default function Editor({
   async function uploadCover(file: File) {
     setUploads((n) => n + 1);
     try {
-      const { key } = await uploadImage(file, target);
+      const { key } = await uploadImage(file, requestTicket);
       updateMeta({ cover: key });
     } catch (error) {
       setNotice({ tone: "error", text: (error as Error).message });
@@ -420,6 +476,37 @@ export default function Editor({
               </button>
             )}
 
+            {confirm === "schedule" ? (
+              <span className="inline-flex items-center gap-1">
+                <input
+                  type="datetime-local"
+                  value={when}
+                  min={localInput(new Date())}
+                  onChange={(e) => setWhen(e.target.value)}
+                  aria-label={t("scheduleAt")}
+                  className="rounded-full border border-border/60 bg-background px-3 py-1 text-sm"
+                />
+                <button type="button" className={cn(button, "border-primary text-primary")} disabled={!when} onClick={confirmSchedule}>
+                  <Check size={15} />
+                  {t("schedule")}
+                </button>
+                <button type="button" aria-label={t("cancel")} className={button} onClick={() => setConfirm(null)}>
+                  <X size={15} />
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                className={button}
+                disabled={!head || dirty || busy !== null || issues.errors.length > 0}
+                title={dirty ? t("saveFirst") : !head ? t("nothingToPublish") : undefined}
+                onClick={openSchedule}
+              >
+                <CalendarClock size={15} />
+                {schedule ? t("reschedule") : t("schedule")}
+              </button>
+            )}
+
             {confirm === "discard" ? (
               <span className="inline-flex items-center gap-1">
                 <button type="button" className={cn(button, "border-destructive bg-destructive text-white hover:text-white")} onClick={discard}>
@@ -464,6 +551,24 @@ export default function Editor({
             )}
             <button type="button" aria-label={t("dismiss")} onClick={() => setNotice(null)}>
               <X size={15} />
+            </button>
+          </div>
+        )}
+        {schedule && (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 p-3 text-sm">
+            <CalendarClock size={16} className="text-primary" />
+            <span className="flex-1">
+              {t("scheduledFor", {
+                time: new Intl.DateTimeFormat(uiLocale, { dateStyle: "full", timeStyle: "short" }).format(new Date(schedule.publishAt)),
+              })}
+              {!Object.values(doc.translations).some((tr) => tr?.status === "published") && <> {t("scheduledHidden")}</>}
+              {dirty && <> {t("scheduledUnsaved")}</>}
+              {schedule.lastError && (
+                <span className="mt-1 block text-destructive">{t("scheduleFailed", { error: schedule.lastError })}</span>
+              )}
+            </span>
+            <button type="button" className={button} disabled={busy !== null} onClick={cancelSchedule}>
+              {t("cancelSchedule")}
             </button>
           </div>
         )}
@@ -841,10 +946,8 @@ export default function Editor({
                     <div className="space-y-6">
                       <HistoryPanel
                         key={`${activeFile}-${head}`}
-                        folder={folder}
-                        slug={slug}
-                        file={activeFile}
-                        gitRef={head ?? "main"}
+                        loadEntries={() => loadHistory({ folder, slug, file: activeFile, ref: head ?? "main" })}
+                        loadText={(sha) => loadVersion({ folder, slug, file: activeFile, sha })}
                         current={current[activeFile] ?? ""}
                         onRestore={(text) => restoreFile(activeFile, text)}
                       />

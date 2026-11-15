@@ -1,5 +1,4 @@
-import { requestUpload } from "@/lib/editor/actions";
-import type { Folder } from "@/lib/editor/format";
+import type { ImageType, UploadTicket } from "@/lib/editor/assets";
 
 /**
  * Paste/drop upload (PLAN.md 2.3): resize in the browser, convert to WebP,
@@ -52,10 +51,17 @@ async function hash16(blob: Blob): Promise<string> {
     .join("");
 }
 
-export async function uploadImage(file: File, target: { folder: Folder; slug: string; contentId: string }) {
+/** Asks the server to record the image and hand out an upload URL (public or private bucket). */
+export type RequestTicket = (image: {
+  hash: string;
+  contentType: ImageType;
+  bytes: number;
+}) => Promise<({ ok: true } & UploadTicket) | { ok: false; error: string }>;
+
+export async function uploadImage(file: File, request: RequestTicket) {
   if (!file.type.startsWith("image/") || file.type === "image/svg+xml") throw new Error(`Unsupported file: ${file.name}`);
   const { blob, type, width, height } = await encode(file);
-  const ticket = await requestUpload({ ...target, hash: await hash16(blob), contentType: type, bytes: blob.size });
+  const ticket = await request({ hash: await hash16(blob), contentType: type, bytes: blob.size });
   if (!ticket.ok) throw new Error(ticket.error);
   if (ticket.url) {
     const response = await fetch(ticket.url, {

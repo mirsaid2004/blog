@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { deleteObjects, objectExists, presignPut, publicBucket } from "@/lib/r2";
+import { deleteObjects, objectExists, presignPut, privateBucket, publicBucket } from "@/lib/r2";
 import { draftAddedText, listDrafts } from "./repo";
 
 /**
@@ -88,4 +88,33 @@ export async function sweepOrphanAssets(): Promise<{ checked: number; deleted: n
     if (!added.get(asset.branch)!.includes(asset.key)) orphans.push(asset);
   }
   return { checked: candidates.length, deleted: await deleteAssets(orphans) };
+}
+
+/**
+ * Note images go to the private bucket under `notes/<noteId>/`. Notes have no
+ * drafts, so the row is marked published right away (the sweeper skips it);
+ * deleting the note deletes its images.
+ */
+export async function prepareNoteUpload(input: {
+  noteId: string;
+  hash: string;
+  contentType: ImageType;
+  bytes: number;
+}): Promise<UploadTicket> {
+  const bucket = privateBucket();
+  const key = `notes/${input.noteId}/${input.hash}.${IMAGE_TYPES[input.contentType]}`;
+  await db()
+    .insert(schema.asset)
+    .values({ key, contentId: input.noteId, bucket, bytes: input.bytes, publishedAt: sql`now()` })
+    .onConflictDoNothing();
+  if (await objectExists(bucket, key)) return { key, url: null };
+  return { key, url: await presignPut(bucket, key, input.contentType) };
+}
+
+export async function deleteNoteAssets(noteId: string): Promise<number> {
+  const rows = await db()
+    .select({ key: schema.asset.key, bucket: schema.asset.bucket })
+    .from(schema.asset)
+    .where(and(eq(schema.asset.contentId, noteId), eq(schema.asset.bucket, privateBucket())));
+  return deleteAssets(rows);
 }
