@@ -1,0 +1,12 @@
+# Netlify settings kept in the repo. Build command, publish directory and the
+# Next.js plugin are set in the Netlify UI.
+
+[build.environment]
+  # Netlify's secrets scanner fails the build when an environment variable's
+  # value appears in the repo. These four aren't secrets, and their values are
+  # written in .env.example, PLAN.md and doc/ on purpose:
+  # - R2_PUBLIC_BUCKET / R2_PRIVATE_BUCKET: bucket names (no access without the R2 keys)
+  # - ADMIN_GITHUB_IDS: a public GitHub user id (admin = signing in with that account)
+  # - GITHUB_CONTENT_REPO: the private content repo's name (no access without the App key)
+  # Every other variable is still scanned.
+  SECRETS_SCAN_OMIT_KEYS = "R2_PUBLIC_BUCKET,R2_PRIVATE_BUCKET,ADMIN_GITHUB_IDS,GITHUB_CONTENT_REPO"
