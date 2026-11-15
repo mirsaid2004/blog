@@ -119,7 +119,7 @@ Each `<locale>.mdx` holds what differs per language:
 ---
 title: Осваиваем распределённые саги
 summary: …
-status: published        # draft | published, per language (scheduled comes in Phase 6)
+status: published        # draft | published, per language (to publish later, schedule the draft; see 2.2)
 translatedFrom: 4e1b9c2  # optional: git sha of the source file this translation is based on
 ---
 
@@ -388,11 +388,12 @@ asset         (key PK, content_id, draft_branch, bucket, bytes, created_at, publ
 
 ### 2.7 Notes (private)
 
-- Store notes in a separate private repo (`blog-notes`), or in the content repo under `notes/`, which the webhook never indexes as public.
-- Serve them only under `/admin/notes`, behind the server-side admin check.
-- Use the same editor and pipeline, with no ratings or views. Notes can be committed directly, without a draft branch, since they are never published.
-- Use the same layout as public content: `notes/<slug>/meta.yml` + `en.mdx` / `ru.mdx` / `uz.mdx`, written in whichever languages you like.
-- Note images go to the private `mdev-blog-private` bucket and are deleted with the note.
+Built in Phase 6:
+
+- Notes live in the content repo under `notes/<slug>/` (`meta.yml` with `id`, `originalLocale`, `tags`, plus one `<locale>.mdx` per language with just a `title`). The sync only reads `articles/`, `posts/` and `series/`, so notes never reach the public index.
+- They're listed and edited only under `/admin/notes`, behind the server-side admin check.
+- They're committed straight to `main` (no draft branch, status, ratings or views). A save names the blob shas it started from and is refused if the note changed elsewhere since.
+- Note images go to the private `mdev-blog-private` bucket under `notes/<id>/`, are served through the admin-only `/api/notes/assets/…` route (a redirect to a five-minute signed URL), and are deleted with the note.
 
 ### 2.8 The MDX editor
 
@@ -420,6 +421,14 @@ Features in priority order:
 6. **Series builder:** search and pick existing articles and posts, reorder by drag and drop, see each item's status (draft items are marked as hidden until published), and warn about dangling ids. It writes the `items` list in the series `meta.yml`.
 7. Scheduled publishing (a cron job merges the draft branch at `publishedAt`) and a diff against `main` before publish.
 
+### 2.9 Scheduled publishing, comments and analytics
+
+Built in Phase 6:
+
+- **Scheduled publishing.** "Schedule" in the editor stores the time in the Neon `scheduled_publish` table (and moves the piece's `publishedAt` to that day on the draft). An hourly Netlify scheduled function calls `/api/cron/publish`, which publishes due drafts with the same validation and merge as the Publish button. A failure is stored on the row, shown in the editor and `/admin`, and retried the next hour.
+- **Comments.** Signed-in readers post plain-text comments (2,000 characters, at most 5 per 10 minutes) that show immediately. Authors can delete their own; the admin can hide (kept, admin-only) or delete any, on the page or in `/admin/analytics`.
+- **Analytics.** `/admin/analytics`: views for the last 30 days and all time, daily views, views by language, most viewed and top-rated pieces, and recent comments with moderation.
+
 ---
 
 ## 3. Phased roadmap
@@ -432,7 +441,7 @@ Features in priority order:
 | **3. Auth** (~3 days) | Better Auth with GitHub and Google, user menu, admin allowlist, guarded `/admin`. | You're admin and others are readers. |
 | **4. Engagement** (~3–4 days) | Views with dedupe, ratings, stats on cards, "Top Picks" ranked by real data, Postgres search. | The numbers on the cards are real. |
 | **5. Editor v1** (~2 weeks) | CodeMirror editor, live preview, language tabs and translate mode, translation matrix and outdated flags, IndexedDB autosave, draft branches (Save / idle commit), Publish as a merge into `main`, drafts list, history and diff panel, image upload to R2, Discard draft with image cleanup, orphan sweeper. | You can write, revisit history, publish and discard without opening VS Code, and discarded drafts leave nothing behind in R2. |
-| **6. Notes and polish** | Private notes, scheduled publishing, analytics dashboard in `/admin`, optional comments. | — |
+| **6. Notes and polish** | Private notes, scheduled publishing, analytics dashboard in `/admin`, comments (see 2.7 and 2.9). | Notes, schedules and comments work end to end; the numbers are visible in `/admin/analytics`. |
 
 Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline are the core of the product. Building them against local files means Phase 2 only replaces where content comes from.
 

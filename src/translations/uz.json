@@ -147,7 +147,9 @@
     "syncNow": "Sinxronlash",
     "syncing": "Sinxronlanmoqda…",
     "synced": "{items} ta yozuv sinxronlandi ({downloaded} ta fayl yuklandi, {removed} ta o'chirildi).",
-    "syncFailed": "Sinxronlashda xato: {message}"
+    "syncFailed": "Sinxronlashda xato: {message}",
+    "analytics": "Analitika",
+    "notes": "Qaydlar"
   },
   "Engagement": {
     "rateTitle": "{kind, select, article {Maqolani} post {Postni} other {Seriyani}} baholang",
@@ -253,6 +255,64 @@
     "slugHint": "Kichik lotin harflari, raqamlar va chiziqchalar. U URL qismi, keyin o‘zgartirib bo‘lmaydi.",
     "slugInvalid": "Kichik lotin harflari, raqamlar va chiziqchalardan foydalaning; harf yoki raqam bilan boshlang.",
     "slugTaken": "Bu slug nashr qilingan material yoki qoralama tomonidan band.",
-    "create": "Yaratish"
+    "create": "Yaratish",
+    "schedule": "Rejalashtirish",
+    "reschedule": "Vaqtini o‘zgartirish",
+    "scheduleAt": "Nashr vaqti",
+    "scheduledFor": "{time} da nashr qilinishi rejalashtirilgan.",
+    "scheduledHidden": "Hali birorta til “nashr qilingan” deb belgilanmagan, shuning uchun yashirin holda chiqadi.",
+    "scheduledUnsaved": "Saqlanmagan o‘zgarishlar kirmaydi: avval saqlang.",
+    "scheduleFailed": "Oxirgi urinish muvaffaqiyatsiz: {error}",
+    "cancelSchedule": "Bekor qilish",
+    "scheduledList": "Rejalashtirilgan"
+  },
+  "Comments": {
+    "title": "{count, plural, =0 {Izohlar} other {# ta izoh}}",
+    "hiddenLabel": "Yashirilgan",
+    "empty": "Hali izoh yo‘q. Birinchi bo‘ling.",
+    "signInToComment": "Muhokamaga qo‘shilish uchun kiring.",
+    "label": "Izohingiz",
+    "placeholder": "Fikringizni yozing…",
+    "hint": "Faqat matn. Hurmat bilan yozing.",
+    "error": "{error, select, tooLong {Juda uzun (ko‘pi bilan 2000 belgi).} tooFast {Juda tez izoh qoldiryapsiz. Bir necha daqiqadan keyin urinib ko‘ring.} signedOut {Izoh qoldirish uchun kiring.} other {Izohni yuborib bo‘lmadi. Qayta urinib ko‘ring.}}",
+    "post": "Yuborish",
+    "hide": "Yashirish",
+    "unhide": "Ko‘rsatish",
+    "delete": "O‘chirish",
+    "confirmDelete": "Butunlay o‘chirish",
+    "cancel": "Bekor qilish"
+  },
+  "Notes": {
+    "title": "Qaydlar",
+    "intro": "Shaxsiy qaydlar, faqat sizga ko‘rinadi. Ular kontent repozitoriyasining notes/ papkasida saqlanadi va hech qachon nashr qilinmaydi.",
+    "notSaved": "Hali saqlanmagan",
+    "delete": "Qaydni o‘chirish",
+    "confirmDelete": "Qayd va rasmlarini o‘chirish",
+    "slugTaken": "Bu slug bilan qayd allaqachon bor.",
+    "newSlug": "Yangi qayd slugi",
+    "new": "Yangi qayd",
+    "search": "Qaydlardan qidirish…",
+    "noMatches": "Hech narsa topilmadi.",
+    "empty": "Hali qaydlar yo‘q."
+  },
+  "Analytics": {
+    "title": "Analitika",
+    "viewsWindow": "Oxirgi {days} kundagi ko‘rishlar",
+    "viewsAllTime": "Jami ko‘rishlar",
+    "ratings": "Baholar",
+    "average": "o‘rtacha {rating}",
+    "comments": "Izohlar",
+    "readers": "Akkauntlar",
+    "dailyViews": "Oxirgi {days} kunda kunlik ko‘rishlar",
+    "viewCount": "{count, plural, other {# ta ko‘rish}}",
+    "byLanguage": "Tillar bo‘yicha ko‘rishlar",
+    "noData": "Hali ko‘rishlar yo‘q.",
+    "topViewed": "Oxirgi {days} kunda eng ko‘p o‘qilgan",
+    "kind": "{kind, select, article {Maqola} post {Post} other {Seriya}}",
+    "topRated": "Eng yuqori baholangan",
+    "noRatings": "Hali hech bir materialda yetarli baho yo‘q.",
+    "recentComments": "So‘nggi izohlar",
+    "noComments": "Hali izoh yo‘q.",
+    "hidden": "yashirilgan"
   }
 }

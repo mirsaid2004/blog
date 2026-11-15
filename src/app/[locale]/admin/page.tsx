@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { count, eq } from "drizzle-orm";
+import { BarChart3, Lock } from "lucide-react";
+import { Link } from "@/i18n/routing";
 import { AdminSignIn } from "@/components/admin/AdminSignIn";
 import { ContentTable } from "@/components/admin/ContentTable";
 import { SyncButton } from "@/components/admin/SyncButton";
@@ -41,7 +43,19 @@ export default async function AdminPage({ params }: PageProps) {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-4xl px-4 pb-24 pt-36 md:px-6">
-      <h1 className="mb-8 text-3xl font-extrabold tracking-tight">{t("title")}</h1>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-extrabold tracking-tight">{t("title")}</h1>
+        <nav className="flex gap-2 text-sm" aria-label={t("title")}>
+          <Link href="/admin/analytics" className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-4 py-2 font-medium hover:border-primary/50 hover:text-primary">
+            <BarChart3 size={16} />
+            {t("analytics")}
+          </Link>
+          <Link href="/admin/notes" className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-4 py-2 font-medium hover:border-primary/50 hover:text-primary">
+            <Lock size={16} />
+            {t("notes")}
+          </Link>
+        </nav>
+      </div>
 
       <section className="rounded-2xl border border-border/60 bg-card/60 p-6">
         <h2 className="mb-4 text-lg font-bold">{t("contentTitle")}</h2>

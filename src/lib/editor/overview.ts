@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import type { Locale } from "next-intl";
 import { db } from "@/lib/db";
 import { folderOf, type Folder, type PieceKind } from "./format";
+import { listSchedules } from "./publish";
 import { listDrafts } from "./repo";
 
 /**
@@ -27,6 +28,8 @@ export interface Overview {
   rows: OverviewRow[];
   /** Drafts of pieces not on main yet. */
   newDrafts: { folder: Folder; slug: string }[];
+  /** Drafts waiting for their publish time (ISO), soonest first. */
+  scheduled: { folder: Folder; slug: string; publishAt: string; lastError: string | null }[];
 }
 
 interface Row extends Record<string, unknown> {
@@ -44,7 +47,7 @@ interface Row extends Record<string, unknown> {
 export async function loadOverview(): Promise<Overview> {
   // A translation is outdated when the original file's current blob sha on main
   // differs from the one it was last brought up to date with (translatedFrom).
-  const [{ rows: result }, drafts] = await Promise.all([
+  const [{ rows: result }, drafts, schedules] = await Promise.all([
     db().execute<Row>(sql`
       select i.id, i.kind, i.slug, i.original_locale, t.locale, t.title, t.status, t.translated_from,
              f.sha as original_sha
@@ -54,6 +57,7 @@ export async function loadOverview(): Promise<Overview> {
                                           || '/' || i.slug || '/' || i.original_locale || '.mdx'
       order by i.published_at desc, i.slug`),
     listDrafts(),
+    listSchedules(),
   ]);
 
   const draftKeys = new Set(drafts.map((d) => `${d.folder}/${d.slug}`));
@@ -83,5 +87,6 @@ export async function loadOverview(): Promise<Overview> {
   return {
     rows: [...rows.values()],
     newDrafts: drafts.filter((d) => !indexed.has(`${d.folder}/${d.slug}`)).map(({ folder, slug }) => ({ folder, slug })),
+    scheduled: schedules.map((s) => ({ ...s, publishAt: s.publishAt.toISOString() })),
   };
 }

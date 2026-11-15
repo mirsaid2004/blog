@@ -14,6 +14,7 @@ import Reveal from "@/components/archive/Reveal";
 import TagList from "@/components/archive/TagList";
 import { OtherLanguages, TranslationNotice } from "@/components/article/TranslationNotice";
 import { ViewTracker } from "@/components/article/ViewTracker";
+import { Comments } from "@/components/engagement/Comments";
 import { RatingPanel } from "@/components/engagement/RatingPanel";
 import { formatDate } from "@/lib/content/format";
 import { contentHref } from "@/lib/content/links";
@@ -187,6 +188,9 @@ export default async function SeriesDetailPage({ params }: PageProps) {
 
         <Suspense fallback={null}>
           <RatingPanel contentId={series.id} kind="series" average={series.rating} count={series.ratingCount} />
+        </Suspense>
+        <Suspense fallback={null}>
+          <Comments contentId={series.id} locale={series.locale} />
         </Suspense>
       </div>
       <ViewTracker id={series.id} locale={series.locale} />

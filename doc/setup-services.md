@@ -152,8 +152,9 @@ daily job that re-syncs content in case a webhook was missed and prunes view
 events older than 90 days) and `/api/content/sync`. The daily job is a Netlify
 Scheduled Function (`netlify/functions/daily-maintenance.mts`, 04:00 UTC) that
 calls `/api/cron/daily`; it runs only on production deploys, and "Run now" in
-the Netlify UI triggers it by hand. To re-sync production
-by hand:
+the Netlify UI triggers it by hand. It also guards `/api/cron/publish`, called
+every hour by `netlify/functions/scheduled-publish.mts` to publish scheduled
+drafts. To re-sync production by hand:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://blog.mirsaidmirakhmedov.uz/api/content/sync
@@ -168,8 +169,9 @@ automatically).
   from `.env` with its production value. `GITHUB_APP_PRIVATE_KEY` can be pasted
   either as the original multi-line PEM or as the one-line `\n` form.
   `SMEE_URL` is only for local development.
-- The daily job (`netlify/functions/daily-maintenance.mts`) is picked up on
-  deploy. Check it under **Logs → Functions** after the first deploy.
+- The daily job (`netlify/functions/daily-maintenance.mts`) and the hourly
+  scheduled-publish job (`netlify/functions/scheduled-publish.mts`) are picked
+  up on deploy. Check them under **Logs → Functions** after the first deploy.
 - Netlify functions time out after 10 seconds by default. A webhook sync only
   downloads changed files and takes a few seconds; the first full sync of a new
   database is better run locally with `npm run content:sync`.

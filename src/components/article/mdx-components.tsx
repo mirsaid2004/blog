@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import Image from "next/image";
 import type { MDXComponents } from "mdx/types";
 import { Link2 } from "lucide-react";
-import { assetUrl } from "@/lib/assets";
+import { assetUrl, isPrivateAsset } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 
 type HeadingProps = ComponentProps<"h2">;
@@ -90,6 +90,8 @@ function Img({ src, alt, width, height, caption }: ImgProps) {
       width={width}
       height={height}
       sizes="(min-width: 768px) 720px, 100vw"
+      // The image optimizer can't fetch private note images (they need the admin's session).
+      unoptimized={isPrivateAsset(src)}
       className="h-auto w-full rounded-xl border border-border"
     />
   );

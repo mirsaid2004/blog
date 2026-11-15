@@ -3,26 +3,25 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { History, RotateCcw } from "lucide-react";
-import { loadHistory, loadVersion } from "@/lib/editor/actions";
-import type { Folder } from "@/lib/editor/format";
 import type { HistoryEntry } from "@/lib/editor/repo";
 import { cn } from "@/lib/utils";
 import DiffView from "./DiffView";
 
+type Loaded<T> = Promise<({ ok: true } & T) | { ok: false; error: string }>;
+
 interface HistoryPanelProps {
-  folder: Folder;
-  slug: string;
-  /** File in the piece folder, e.g. `en.mdx`. */
-  file: string;
-  /** Branch to read history from: the draft, or main. */
-  gitRef: string;
+  /** Commits that touched the open file (from the draft branch or main). */
+  loadEntries: () => Loaded<{ entries: HistoryEntry[] }>;
+  /** The file's text at a commit, or null if it didn't exist then. */
+  loadText: (sha: string) => Loaded<{ text: string | null }>;
   /** The file as it is in the editor now, to diff against. */
   current: string;
   onRestore: (text: string) => void;
 }
 
 /** Commits that touched a file; pick one to see its diff against the editor and restore it. */
-export default function HistoryPanel({ folder, slug, file, gitRef, current, onRestore }: HistoryPanelProps) {
+/** Remount it (with a `key`) to load another file's history. */
+export default function HistoryPanel({ loadEntries, loadText, current, onRestore }: HistoryPanelProps) {
   const t = useTranslations("Editor");
   const locale = useLocale();
   const [entries, setEntries] = useState<HistoryEntry[] | null>(null);
@@ -31,7 +30,7 @@ export default function HistoryPanel({ folder, slug, file, gitRef, current, onRe
 
   useEffect(() => {
     let cancelled = false;
-    loadHistory({ folder, slug, file, ref: gitRef }).then((result) => {
+    loadEntries().then((result) => {
       if (cancelled) return;
       if (result.ok) setEntries(result.entries);
       else setError(result.error);
@@ -39,10 +38,12 @@ export default function HistoryPanel({ folder, slug, file, gitRef, current, onRe
     return () => {
       cancelled = true;
     };
-  }, [folder, slug, file, gitRef]);
+    // Loaded once per mount; the parent remounts the panel for another file.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function select(sha: string) {
-    const result = await loadVersion({ folder, slug, file, sha });
+    const result = await loadText(sha);
     if (result.ok) setSelected({ sha, text: result.text });
     else setError(result.error);
   }
