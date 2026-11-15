@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import type { Locale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { count, eq } from "drizzle-orm";
+import { AdminSignIn } from "@/components/admin/AdminSignIn";
+import { ContentTable } from "@/components/admin/ContentTable";
 import { SyncButton } from "@/components/admin/SyncButton";
-import { MobileUserMenu } from "@/components/auth/UserMenu";
 import { getViewer } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
+import { loadOverview } from "@/lib/editor/overview";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -27,25 +29,18 @@ export default async function AdminPage({ params }: PageProps) {
   const t = await getTranslations("Admin");
   const viewer = await getViewer();
 
-  if (!viewer) {
-    return (
-      <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-36">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="mb-6 text-sm text-muted-foreground">{t("signInRequired")}</p>
-        <MobileUserMenu />
-      </main>
-    );
-  }
+  if (!viewer) return <AdminSignIn />;
   if (!viewer.isAdmin) notFound();
 
-  const [[sync], [{ items }]] = await Promise.all([
+  const [[sync], [{ items }], overview] = await Promise.all([
     db().select().from(schema.contentSync).where(eq(schema.contentSync.id, 1)),
     db().select({ items: count() }).from(schema.contentItems),
+    loadOverview(),
   ]);
   const repo = process.env.GITHUB_CONTENT_REPO ?? "";
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 pb-24 pt-36 md:px-6">
+    <main className="mx-auto min-h-screen w-full max-w-4xl px-4 pb-24 pt-36 md:px-6">
       <h1 className="mb-8 text-3xl font-extrabold tracking-tight">{t("title")}</h1>
 
       <section className="rounded-2xl border border-border/60 bg-card/60 p-6">
@@ -94,6 +89,8 @@ export default async function AdminPage({ params }: PageProps) {
 
         <SyncButton />
       </section>
+
+      <ContentTable overview={overview} />
     </main>
   );
 }

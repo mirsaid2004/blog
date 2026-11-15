@@ -124,6 +124,7 @@ export async function syncContent(): Promise<SyncResult> {
       status: t!.status,
       readMinutes: t!.readMinutes,
       body: t!.body,
+      translatedFrom: t!.translatedFrom ?? null,
     }));
 
   const { contentFiles, contentItems, contentTranslations, contentSync } = schema;

@@ -52,6 +52,23 @@ function rehypeCollectToc(toc: TocItem[]) {
   };
 }
 
+/** Compile MDX with the site's plugins. Throws on a syntax error. */
+export async function compileMdx(source: string, components: MDXComponents) {
+  const toc: TocItem[] = [];
+  const { content, error } = await evaluate({
+    source,
+    components,
+    options: {
+      mdxOptions: {
+        remarkPlugins: [remarkGfm],
+        rehypePlugins: [rehypeSlug, [rehypePrettyCode, prettyCode], rehypeCollectToc(toc)],
+      },
+    },
+  });
+  if (error) throw error;
+  return { content, toc };
+}
+
 /**
  * Compile a piece's MDX body in `locale`, which must be a language the piece has
  * (the item's resolved `locale`). Returns null while the body is still empty.
@@ -60,20 +77,6 @@ export const getContentBody = cache(
   async (type: ContentType, slug: string, locale: Locale, components: MDXComponents) => {
     const body = await loadBody(type, slug, locale);
     if (!body) return null;
-
-    const toc: TocItem[] = [];
-    const { content, error } = await evaluate({
-      source: body,
-      components,
-      options: {
-        mdxOptions: {
-          remarkPlugins: [remarkGfm],
-          rehypePlugins: [rehypeSlug, [rehypePrettyCode, prettyCode], rehypeCollectToc(toc)],
-        },
-      },
-    });
-    if (error) throw error;
-
-    return { content, toc };
+    return compileMdx(body, components);
   }
 );

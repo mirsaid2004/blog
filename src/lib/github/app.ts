@@ -31,6 +31,10 @@ function privateKey(): string {
 
 let client: Octokit | undefined;
 
+// Octokit logs every failed request. A 404 is routine here ("no draft branch
+// yet"), and callers handle real errors, so only warnings are logged.
+const log = { debug() {}, info() {}, warn: console.warn, error() {} };
+
 /** Octokit authenticated as the app's installation on the content repo. */
 export function contentOctokit(): Octokit {
   return (client ??= new Octokit({
@@ -41,6 +45,7 @@ export function contentOctokit(): Octokit {
       installationId: required("GITHUB_APP_INSTALLATION_ID"),
     },
     userAgent: "mdev-blog",
+    log,
   }));
 }
 
