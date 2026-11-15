@@ -1,6 +1,6 @@
 # Development Plan — M_DEV Blog
 
-_Last updated: 2026-11-14_
+_Last updated: 2026-11-16_
 
 ## Goals
 
@@ -450,12 +450,12 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 ## 4. Open decisions
 
 - [x] **Content language.** Decided: any piece can be written in en, ru and/or uz, as `<type>/<slug>/meta.yml` plus one `<locale>.mdx` per language (see [2.1.1](#211-multilingual-content)).
-- [ ] **Shared or per-language slugs?** One shared Latin slug for all languages (recommended), or optional localized slugs per language.
+- [x] **Shared or per-language slugs?** Decided (built): one shared Latin slug for all languages. Per-language slugs remain a possible later addition.
 - [x] **Lists in a locale.** Decided: every published piece appears in every language's lists. A card shows which languages the piece is in when the reader's language is missing. Opening it shows a published version straight away, with a notice and buttons for the available languages. The notice says the reader's translation is "coming soon" only when that translation exists as a draft.
 - [x] **Series model.** Decided: a series is an ordered list of existing articles and posts, which can be mixed (see [2.1.2](#212-series-model)).
 - [x] **One series or several per piece?** Decided: several are allowed, though it will be rare. The `?series=` link decides which banner a reader sees.
-- [ ] **Post versus article.** If a post is a short note with no cover or table of contents, keep one `content` table with a `type` column.
-- [ ] **Publish merge style.** A merge commit keeps the full draft history reachable from `main` (recommended, since you want searchable history). A squash merge keeps `main` cleaner but leaves the history only on the draft branch. It also changes which images count as published (see [2.3](#23-media-cloudflare-r2)).
+- [x] **Post versus article.** Decided (built): one `content_items` table with a `kind` column (`article`, `post`, `series`). Articles show a cover; posts are text-first.
+- [x] **Publish merge style.** Decided (built): merge commit. A merge commit keeps the full draft history reachable from `main` (recommended, since you want searchable history). A squash merge keeps `main` cleaner but leaves the history only on the draft branch. It also changes which images count as published (see [2.3](#23-media-cloudflare-r2)).
 - [ ] **Image domain.** Pick the R2 custom domain, for example `img.<your-domain>`.
 - [x] **Hosting.** Decided: Netlify. Its Next.js runtime handles ISR and `revalidateTag`; the daily job is a Netlify Scheduled Function that calls `/api/cron/daily`.
 
@@ -476,6 +476,77 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 | Editor | CodeMirror 6 + live MDX preview |
 | Media | Cloudflare R2: `mdev-blog` (public, custom domain) and `mdev-blog-private` (private); content-hashed immutable keys; `asset` table for cleanup |
 | Hosting | Netlify (Next.js runtime, Scheduled Functions) |
+
+---
+
+## 6. Remaining work
+
+Phases 0–6 are built. This is what's left, so it can be picked up later.
+Check items off here as they're done.
+
+### 6.1 Verify in production (after the first Netlify deploy)
+
+- [ ] **Content refresh on Netlify.** Push a small change to `blog-db` and check the page updates within seconds. This confirms `revalidateTag` and `unstable_cache` work on Netlify's Next.js runtime. If they don't, switch the content cache to `"use cache"` with `cacheTag`, or use Netlify's on-demand cache purge.
+- [ ] **Scheduled functions.** Both `daily-maintenance` and `scheduled-publish` appear under Logs → Functions; run each once with "Run now".
+- [ ] **Scheduled publish end to end.** Schedule a throwaway piece a few minutes ahead and confirm the next hourly run publishes it.
+- [ ] **Note image upload.** Paste an image into a note, reload, and check it renders. This exercises the private bucket, the upload and the `/api/notes/assets` redirect.
+- [ ] **Function timeouts.** Publish with a large piece and check it stays under Netlify's function limit. If not, raise the limit or move the post-merge sync to a background function, since the webhook re-syncs anyway.
+- [ ] **OAuth on the production domain.** Sign in with GitHub and Google on `blog.mirsaidmirakhmedov.uz`.
+
+### 6.2 Setup and content leftovers
+
+- [ ] **Image domain.** Put the public bucket behind a custom domain (for example `img.mirsaidmirakhmedov.uz`), update `NEXT_PUBLIC_ASSETS_URL` and `images.remotePatterns`, and add a Cloudflare cache rule `Cache-Control: public, max-age=31536000, immutable` (uploads don't set it per object; see 2.3).
+- [ ] **`next/image` and Netlify Image CDN.** Decide whether R2 images go through Netlify's image optimization (counts against its limits) or are served as uploaded (`unoptimized`), since uploads are already resized to 1600px WebP.
+- [ ] **Google site verification.** Add the `verification.google` token in `src/app/[locale]/layout.tsx` when Search Console is set up.
+- [ ] **`twitter:creator`.** Confirm or replace the `@mirsaid_dev` placeholder in `src/app/[locale]/layout.tsx`.
+- [ ] **README.** Replace the create-next-app boilerplate with a short project intro that links to `doc/`.
+- [ ] **Translations.** Have a native speaker proofread the ru and uz UI strings (`src/translations/`), especially the Editor, Comments, Notes and Analytics namespaces.
+- [ ] **Existing translations' `translatedFrom`.** Translations written before Phase 5 have no `translatedFrom`, so they're never flagged as outdated. Open each and use "Mark as up to date" once.
+- [ ] **Replace the seed content.** The articles in `blog-db` are sample content with placeholder covers (some are external URLs). Replace or delete them before launch.
+
+### 6.3 Unfinished features
+
+- [ ] **Hero category chips and tabs.** The chips in `src/components/home/hero/HeroFilterings.tsx` (`FILTER_CATEGORIES`) and the tabs don't do anything yet. Decide what they mean (tags? type? sort?) and wire them to `?q=`/filters like the archive pages.
+- [ ] **Series builder drag and drop.** Parts are reordered with up/down buttons (`SeriesItems.tsx`); add drag and drop if it feels slow.
+- [ ] **Renaming a slug.** The editor treats the slug as fixed. Renaming means moving the folder on a draft branch (and redirecting the old URL).
+- [ ] **Hard-delete a published piece** ("purge", see 2.3): delete its files from main, its `content/<id>/` images, and optionally its stats and comments.
+- [ ] **Comment extras** (optional): replies, pagination beyond the first 500, an "edited" state, notifying the admin of new comments, and a report button.
+- [ ] **Notes extras** (optional): full-text search inside note bodies (today the list searches titles, slugs and tags), and links between notes.
+- [ ] **Account deletion.** If readers can ever delete their account, recompute `content_stats` for the pieces they rated (deleting a user cascades to ratings and comments without recomputing totals; see `src/lib/engagement/ratings.ts`).
+- [ ] **Analytics extras** (optional): referrers, per-piece trend, CSV export. Views older than 90 days only exist as totals.
+
+### 6.4 Performance
+
+- [ ] **Measure first.** Run Lighthouse / PageSpeed on the home, an article and a list page on production, and check Netlify's function logs for slow requests and Neon cold starts.
+- [ ] **Static rendering for public pages.** Detail and list pages are dynamic (ƒ) because they read the session (ratings, comments) during render. Move the per-viewer parts behind client components or Suspense boundaries fed by a route or action, so the page shell can be cached or prerendered (Next 16 Cache Components / Partial Prerendering).
+- [ ] **`"use cache"` instead of `unstable_cache`.** Move `src/lib/content/source.ts` and `stats.ts` to `"use cache"` + `cacheTag`/`cacheLife`.
+- [ ] **Neon cold starts.** On the free tier the first query after idle can take seconds. Keep stats reads cached (they are, for 5 minutes), and consider a Neon plan without scale-to-zero, or a warm-up ping, if it shows up in real use.
+- [ ] **Client JavaScript on public pages.** Audit the bundle (`next build` output, `@next/bundle-analyzer`). The heavy visual effects (`react-bits`, `ogl`, light rays, framer-motion) should load lazily or only on the home page, and respect `prefers-reduced-motion`.
+- [ ] **Editor bundle.** `@codemirror/language-data` loads code-block languages on demand already; check the admin bundle size and lazy-load the editor route's heavy parts if needed. Admin-only, so lower priority.
+- [ ] **MDX compile cost.** Bodies are compiled on every request. Cache the compiled output per (piece, locale, body sha), or precompile during sync.
+- [ ] **Shiki.** Syntax highlighting runs at render time; make sure only the needed themes and languages load.
+- [ ] **Images.** Covers use `sizes`; check LCP on article pages (cover `priority`), and use `fetchPriority` correctly.
+- [ ] **Preview requests.** The live preview calls a server action 600 ms after typing stops, and server actions run one at a time, so a slow save can delay the preview. If it bothers you, move preview to a route handler.
+
+### 6.5 UI and UX
+
+- [ ] **Hero search and filters.** Wire the chips (6.3), and show result counts and a clear button.
+- [ ] **Empty and loading states.** Skeletons for lists and the comments section (currently `Suspense fallback={null}`).
+- [ ] **Accessibility pass.** Keyboard and screen-reader check of the navbar, user menu, TOC, rating stars, comments and the editor; colour contrast in both themes.
+- [ ] **Mobile editor.** The editor works best on wide screens; on phones, stack the preview under the body or put it behind a toggle.
+- [ ] **Editor polish.** A toolbar for common formatting, a word count, a fullscreen/zen mode, a confirm when leaving with a pending upload, and inline display of save conflicts with a diff.
+- [ ] **Admin dashboard.** Pagination and filters for the content matrix (by type, language status, has draft), and links to the live page per row.
+- [ ] **Comment UX.** Show the reader's own new comment instantly (optimistic) instead of after the refresh, and highlight the comment from a `#comment-…` link.
+- [ ] **Reading experience.** Reading progress bar, copy button on code blocks, image zoom, "next in series" at the end, related pieces by tag.
+- [ ] **Consistent design tokens.** Some components still use hard-coded colours (amber/emerald/orange status chips, gradients); move them to theme tokens.
+
+### 6.6 Engineering
+
+- [ ] **Automated tests.** There are none yet. Start with unit tests for `parse.ts`, `editor/format.ts` (round trips, `gitBlobSha`), `notes/format.ts` and the comment/rating rules, then a Playwright smoke test (home, article, sign-in mock, editor save on a test branch).
+- [ ] **CI.** Run lint, typecheck and tests on pull requests (today only the local pre-commit hook runs lint and build).
+- [ ] **Error monitoring.** Add error reporting (for example Sentry) for server actions, the webhook and the cron routes, since their failures are otherwise only in Netlify logs.
+- [ ] **Separate development database.** If local development and production point at the same Neon database (as `.env` does during development), create a Neon branch for development so tests and experiments don't touch real data.
+- [ ] **Rate-limit public endpoints.** `/api/views` and the comment/rating actions rely on dedupe and per-user limits; add an IP-based limit (Netlify or a small Neon/Upstash counter) if abuse appears.
 
 ---
 
