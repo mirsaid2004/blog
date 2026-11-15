@@ -484,14 +484,104 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 Phases 0–6 are built. This is what's left, so it can be picked up later.
 Check items off here as they're done.
 
-### 6.1 Verify in production (after the first Netlify deploy)
+### 6.1 Production test plan (after the first Netlify deploy)
 
-- [ ] **Content refresh on Netlify.** Push a small change to `blog-db` and check the page updates within seconds. This confirms `revalidateTag` and `unstable_cache` work on Netlify's Next.js runtime. If they don't, switch the content cache to `"use cache"` with `cacheTag`, or use Netlify's on-demand cache purge.
-- [ ] **Scheduled functions.** Both `daily-maintenance` and `scheduled-publish` appear under Logs → Functions; run each once with "Run now".
-- [ ] **Scheduled publish end to end.** Schedule a throwaway piece a few minutes ahead and confirm the next hourly run publishes it.
-- [ ] **Note image upload.** Paste an image into a note, reload, and check it renders. This exercises the private bucket, the upload and the `/api/notes/assets` redirect.
-- [ ] **Function timeouts.** Publish with a large piece and check it stays under Netlify's function limit. If not, raise the limit or move the post-merge sync to a background function, since the webhook re-syncs anyway.
-- [ ] **OAuth on the production domain.** Sign in with GitHub and Google on `blog.mirsaidmirakhmedov.uz`.
+Run this on `https://blog.mirsaidmirakhmedov.uz` after the first deploy, and
+again after big changes. Use throwaway content (e.g. a post `zz-test`) and
+delete it afterwards. Open an incognito window for the "reader" and
+"signed-out" checks, and keep Netlify **Logs → Functions** open to catch
+server errors.
+
+**Deploy and configuration**
+
+- [ ] The build passes the secrets scan (`netlify.toml` omits the four non-secret keys) and no real secret appears in the build output.
+- [ ] Every variable from `.env.example` is set in Netlify with its production value; `NEXT_PUBLIC_SITE_URL` and `BETTER_AUTH_URL` are the production URL.
+- [ ] `GITHUB_APP_PRIVATE_KEY` works as pasted (the admin "Sync now" button succeeds).
+- [ ] Migrations `0000`–`0004` are applied to the production database (`npm run db:migrate` against it, if it's a separate Neon branch).
+
+**Public pages and SEO**
+
+- [ ] `/`, `/uz`, `/ru`, `/en` and each list page (articles, posts, series) load in all three languages; the default locale (uz) redirect works.
+- [ ] An article, a post and a series page render: MDX, code highlighting, tables, images, TOC (desktop rail and mobile), series banner and previous/next.
+- [ ] Language fallback: open a piece in a language it lacks; the notice shows, the canonical points at the original, and the page is `noindex`.
+- [ ] `robots.txt`, `sitemap.xml` (all published translations with alternates) and `/<locale>/rss.xml` are valid; `/api/` and `/*/admin` are disallowed.
+- [ ] Open Graph images render for the home, a list and a piece (check with a link preview tool or by opening the `opengraph-image` URL).
+- [ ] 404 page for an unknown slug, and the error page doesn't leak details.
+- [ ] Dark and light theme, and phone width (no horizontal scroll, navbar and mobile menu work).
+
+**Content pipeline**
+
+- [ ] **Webhook:** push a one-line change to a published piece in `blog-db`; the GitHub App's "Recent deliveries" shows 200, and the page shows the change within seconds without a redeploy. This confirms `revalidateTag` and `unstable_cache` work on Netlify's runtime; if not, switch the content cache to `"use cache"` + `cacheTag` or use Netlify's on-demand purge.
+- [ ] **Invalid content:** push a piece with a broken frontmatter field; the site keeps the previous version and `/admin` lists the rejected file. Fix it and the error clears.
+- [ ] **Deletion:** delete a throwaway piece's folder on main; it disappears from lists, sitemap and RSS.
+- [ ] Webhook signature: a request to `/api/webhooks/github` without a valid signature is rejected.
+
+**Auth**
+
+- [ ] Sign in with GitHub and with Google on the production domain; sign out; the menu shows the right account.
+- [ ] The same email via both providers ends up as one account.
+- [ ] As a non-admin reader, `/admin`, `/admin/analytics`, `/admin/notes` and `/admin/edit/…` return 404; signed out, they show the sign-in prompt.
+- [ ] Admin server actions can't be called by a reader (e.g. replaying a save request from the browser's network tab as a reader fails).
+
+**Views, ratings and search**
+
+- [ ] Opening a piece counts one view; reloading the same day doesn't count again; the number shows on cards after the cache window.
+- [ ] A bot user agent (e.g. `curl -A Googlebot`) doesn't count.
+- [ ] Rate a piece, change the rating, remove it; the average shows only from 3 ratings on. Signed out, the stars ask you to sign in.
+- [ ] Hero search finds pieces by title and body words in en, ru and uz, including prefixes; the reader's language ranks first.
+- [ ] Top Picks and "most viewed" reflect real numbers.
+
+**Comments**
+
+- [ ] Post a comment as a reader: it appears immediately; HTML is shown as text; line breaks are kept.
+- [ ] The 6th comment within 10 minutes is refused with the "too fast" message; 2,001 characters are refused.
+- [ ] The author can delete their own comment; another reader can't delete or hide it.
+- [ ] As admin: hide (reader no longer sees it, admin sees it dimmed), unhide, delete — on the page and in `/admin/analytics`.
+
+**Editor (articles, posts, series)**
+
+- [ ] Create a new post, write in two languages, paste and drop an image, insert a `/image` snippet; the preview matches the published page.
+- [ ] Save, keep typing, and wait a minute: the idle auto-save commits to `draft/posts/<slug>` (check the branch on GitHub).
+- [ ] Reload with unsaved edits: the "restore unsaved changes" banner appears and works.
+- [ ] Two tabs on the same draft: saving in one makes the other's save fail with a reload message (no overwrite).
+- [ ] History: restore an older version of a file, save, and see it in the diff.
+- [ ] Translate mode: change the original after a translation is marked up to date; the translation shows "possibly outdated", the diff, and the `/admin` matrix shows "outdated".
+- [ ] Publish: the piece goes live within seconds, the branch is deleted, images now count as published, and the "View on site" link works.
+- [ ] Edit a published piece in VS Code on main while a draft exists: the editor offers "Update from main" and it merges.
+- [ ] Discard a draft that uploaded images: the branch is gone and those images return 404 from the image domain; images of the published version still load.
+- [ ] Series: build a series from existing pieces, reorder, publish; an unpublished part is hidden from readers; an unknown id shows a warning but doesn't break the page.
+- [ ] A piece too large or slow to publish within Netlify's function limit (try a long article with many code blocks). If it times out, raise the limit or move the post-merge sync to a background function, since the webhook re-syncs anyway.
+
+**Scheduled publishing**
+
+- [ ] Schedule a draft for the next hour: the editor banner and `/admin` show the time, and `publishedAt` moved to that day.
+- [ ] After the next hourly run, the piece is live and the schedule is gone (check `scheduled-publish` in Logs → Functions).
+- [ ] Schedule a draft with a validation error: the run records the error, it's shown in the editor and `/admin`, and it publishes on the next run after you fix and save it.
+- [ ] Cancel a schedule, and discard a scheduled draft: neither publishes.
+- [ ] Times are right across time zones: schedule in your local time and confirm it went live at that local time.
+
+**Notes**
+
+- [ ] Create a note, add a second language, paste an image, save; it appears in `/admin/notes` and under `notes/` on main in `blog-db`.
+- [ ] Reload: the note image loads (private bucket through `/api/notes/assets`). Opening that image URL signed out or as a reader returns 404, and the raw R2 URL isn't publicly readable.
+- [ ] Notes never appear on the public site, in search, the sitemap or RSS.
+- [ ] Delete the note: its files are gone from main and its images are deleted from the private bucket.
+
+**Scheduled jobs and maintenance**
+
+- [ ] `daily-maintenance` and `scheduled-publish` are listed under Functions; "Run now" on each returns success in the logs.
+- [ ] `/api/cron/daily`, `/api/cron/publish` and `/api/content/sync` return 401 without the `CRON_SECRET` bearer token.
+- [ ] After a daily run: view events older than 90 days are pruned, and an image uploaded to a draft but never saved is removed after a day.
+
+**Analytics**
+
+- [ ] `/admin/analytics` numbers match what you did above (views, ratings, comments, accounts); the daily chart tooltips show the right dates; views by language add up.
+
+**Performance and limits (baseline before optimising, see 6.4)**
+
+- [ ] Lighthouse / PageSpeed for home, an article and a list page (mobile and desktop): record LCP, CLS, INP and the scores.
+- [ ] First request after the site has been idle (Neon cold start, function cold start): note how long it takes.
+- [ ] Netlify usage after a few days: function invocations, bandwidth and image transformations, against the plan's limits; R2 storage and operations; GitHub App API usage (5,000 requests/hour).
 
 ### 6.2 Setup and content leftovers
 
