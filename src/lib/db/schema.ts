@@ -74,6 +74,8 @@ export const contentTranslations = pgTable(
     readMinutes: integer("read_minutes").notNull(),
     /** MDX without frontmatter. */
     body: text("body").notNull(),
+    /** Blob sha of the original-language file this translation was last brought up to date with. */
+    translatedFrom: text("translated_from"),
     /** Title (weight A), summary (B) and body (D), stemmed for the row's language. */
     search: tsvector("search")
       .notNull()
@@ -207,4 +209,27 @@ export const viewEvent = pgTable(
     locale: text("locale").notNull(),
   },
   (t) => [primaryKey({ columns: [t.contentId, t.visitorHash, t.day] }), index("view_event_day").on(t.day)]
+);
+
+// --- Media (PLAN.md 2.3) ------------------------------------------------------------
+
+/**
+ * One row per uploaded image. The row is inserted before the upload, so no R2
+ * object can exist without one. An image is deletable only while `published_at`
+ * is null: discarding its draft branch deletes it, publishing makes it permanent.
+ */
+export const asset = pgTable(
+  "asset",
+  {
+    /** R2 key: `content/<contentId>/<sha256-16-hex>.<ext>`. */
+    key: text("key").primaryKey(),
+    contentId: text("content_id").notNull(),
+    /** The draft branch it was uploaded from (`draft/<folder>/<slug>`). */
+    draftBranch: text("draft_branch"),
+    bucket: text("bucket").notNull(),
+    bytes: integer("bytes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+  },
+  (t) => [index("asset_draft_branch").on(t.draftBranch), index("asset_content_id").on(t.contentId)]
 );

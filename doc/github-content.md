@@ -19,7 +19,7 @@ within seconds.
                    ▼                                   ▼
    ┌───────────── blog-db (private repo) ──────────────────────┐
    │ main          published content                                │
-   │ draft/<slug>  one branch per piece in progress                 │
+   │ draft/<folder>/<slug>  one branch per piece in progress                 │
    └───────┬─────────────────────────────────────────────▲──────────┘
            │ push to main → webhook (signed)             │ read files, write commits
            ▼                                             │ (installation token)
@@ -112,16 +112,34 @@ the real site, and smee isn't involved.
 
 ### Phase 5: writing from the editor
 
-The editor uses the same installation token to **write**:
+The editor (`/admin`, then a piece's **Edit** link or **New piece**) uses the
+same installation token to **write**. Code: `src/lib/editor/`.
 
-- **Save** commits to `draft/<slug>`, creating the branch from `main` the first
-  time. One commit can contain several files (via the Git Data API: blob → tree
-  → commit → update ref).
-- **Publish** merges `draft/<slug>` into `main` with a merge commit, which
-  keeps the draft's history. That push to `main` triggers the webhook, so
-  publishing from the editor and pushing from VS Code take the same path.
-- **Drafts list** = the repo's `draft/*` branches. **History** = the commits of
-  a file.
+- **Branches.** Each piece in progress has one branch,
+  `draft/<folder>/<slug>` (folder: `articles`, `posts` or `series`), covering
+  all its languages.
+- **Save** (button, Cmd/Ctrl+S, or automatically after a minute without
+  typing) commits the changed files to the draft branch, creating it from
+  `main` the first time. One commit can contain several files (Git Data API:
+  tree → commit → update ref). The editor sends the head it loaded; if the
+  branch moved since (another tab, a push from VS Code), the save is refused
+  instead of overwriting.
+- **Between saves** the editor keeps a copy in the browser's IndexedDB, and
+  offers to restore it after a crash or reload.
+- **Publish** validates the draft with the same schemas as the sync, merges it
+  into `main` with a merge commit (keeping the draft's history), deletes the
+  branch, marks its images as published and re-syncs the index right away. The
+  merge is a push to `main`, so the webhook fires as well.
+- **Discard** deletes the branch and the images uploaded for it that never
+  reached `main`.
+- **Update from main** appears when `main` changed this piece's files after the
+  draft branched off (e.g. you edited them in VS Code). It merges `main` into
+  the draft. A conflict has to be resolved in the repo.
+- **History** lists the commits of the open file on the draft (or `main`),
+  with a diff against the editor and a restore button.
+- **Translations** carry `translatedFrom` (the original file's blob sha) in
+  their frontmatter; when the original changes, the translation shows as
+  outdated in the editor and in the `/admin` matrix.
 
 ### Rate limits
 

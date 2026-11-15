@@ -34,7 +34,7 @@ Neon holds only what git can't do well: users, sessions, ratings, views, the pub
 | Data | All content is hardcoded mock data, copied across `LatestBlogs`, `TopPicks` and the three list pages. There are no content types or schema. |
 | Content pipeline | No MDX rendering, no content source, no caching or revalidation. |
 | Auth / DB | None. There are no dependencies, environment config or API routes for either. |
-| Editor / admin | None. |
+| Editor / admin | None. (Done in Phase 5: `/admin` content matrix and the editor at `/admin/edit/<folder>/<slug>`.) |
 | Notes | Not started. |
 | Search / filters | The search box and category pills exist in the UI, but nothing is wired up behind them. |
 | Content i18n | next-intl translates the UI strings only. There's no model yet for content written in several languages. |
@@ -50,12 +50,12 @@ Neon holds only what git can't do well: users, sessions, ratings, views, the pub
 ```
 ┌──────────────── content repo (GitHub, private) ────────────────────┐
 │ main            ← published content only                           │
-│ draft/<slug>    ← one branch per piece in progress                 │
+│ draft/<folder>/<slug>  ← one branch per piece in progress          │
 │                                                                    │
 │ articles|posts|series/<slug>/                                      │
 │   meta.yml   ← shared: id, tags, cover, dates, series items        │
 │   en.mdx  ru.mdx  uz.mdx   ← one file per available language       │
-└───────▲ Save → commit to draft/<slug>      │ push to main → webhook ┘
+└───────▲ Save → commit to draft branch      │ push to main → webhook ┘
         │ Publish → merge into main          ▼
    MDX editor (/admin) ──► Next.js app ──► /api/webhooks/github (main only)
    (IndexedDB autosave)      │   │   │       ├─ parse frontmatter → upsert `content` index in Neon
@@ -135,7 +135,7 @@ A piece is **one** piece in up to three languages, not three separate pieces. Al
 - the `id`, slug, tags, cover and images (`content/<id>/…` in R2),
 - ratings and view counts (stored per piece; views also record the locale for analytics),
 - series membership,
-- one draft branch (`draft/<slug>`) that covers every language.
+- one draft branch (`draft/<folder>/<slug>`) that covers every language.
 
 Each translation has its **own** title, summary, body and **status**, so you can publish English now and keep Russian as a `draft` in the same piece.
 
@@ -162,7 +162,7 @@ Each translation has its **own** title, summary, body and **status**, so you can
 - The sitemap lists every published translation with its alternates.
 - Generate one RSS feed per locale.
 
-**Keeping translations in sync:** when the original file changes after a translation was last updated, flag the translation as **possibly outdated**. Compare commit dates, or `translatedFrom` against the source file's current sha. The editor shows the flag and a diff of what changed in the original since then.
+**Keeping translations in sync:** when the original file changes after a translation was last updated, flag the translation as **possibly outdated**. Each translation's frontmatter stores `translatedFrom`, the git blob sha of the original file it was last brought up to date with. When the original's current sha differs, the editor and the translation matrix flag it, and the editor shows a diff of the original since then (one `getBlob` call). "Mark as up to date" sets the field to the current sha.
 
 **UI strings versus content:** next-intl's JSON files keep handling interface text (nav, buttons, footer). Article text never goes there.
 
@@ -209,7 +209,7 @@ Seriya sahifasining yuqorisida ko'rsatiladigan kirish matni.
 - **Only published items are shown.** Draft or scheduled items are hidden from the public series page and skipped in previous/next navigation. They appear automatically once published.
 - **Validation in the webhook and editor:** every id must exist and be an article or post (series can't nest), with no duplicates. An unknown id is reported as a warning and skipped, so it never breaks the build.
 - **Deleting an article or post** that a series references leaves a dangling id. The webhook flags it, and the editor offers to remove it from the series.
-- **Series are content too.** They get an `id`, a row in the `content` table (`type = 'series'`), and their own ratings and views. They also go through the same draft branch flow, as `draft/series-<slug>`.
+- **Series are content too.** They get an `id`, a row in the `content` table (`type = 'series'`), and their own ratings and views. They also go through the same draft branch flow, as `draft/series/<slug>`.
 
 **Reading experience:**
 
@@ -224,7 +224,7 @@ All content, drafts included, lives in GitHub. Each piece in progress gets its o
 
 ```
 main                 ← published content only; the webhook syncs this branch
-draft/<slug>         ← one branch per piece in progress
+draft/<folder>/<slug> ← one branch per piece in progress (folder: articles, posts or series)
 ```
 
 **Why not commit on every autosave?** An editor autosaves every few seconds, and turning each save into a commit causes problems:
@@ -235,12 +235,12 @@ draft/<slug>         ← one branch per piece in progress
 
 **Workflow:**
 
-1. **Save, with an optional idle commit.** Commit to `draft/<slug>` when you press Save, or after about 60 seconds without typing. That gives meaningful checkpoints, not keystroke noise.
+1. **Save, with an optional idle commit.** Commit to `draft/<folder>/<slug>` when you press Save, or after about 60 seconds without typing. That gives meaningful checkpoints, not keystroke noise.
 2. **Keystroke autosave stays local.** Keep it in IndexedDB in the browser. It's only crash recovery between commits, not a source of truth, so Neon has no `draft` table.
 3. **Publish merges into `main`.** Use a merge commit rather than a squash, so the full draft history stays reachable from `main`. Then delete the branch, or keep it.
-4. **Editing published content.** Create `draft/<slug>` from `main`, edit, and merge again. Every revision appears in git history.
-   - **Languages share the branch.** One `draft/<slug>` covers every language of a piece. Publishing merges all of them, and each file's `status` decides which languages are visible. To ship English now and Russian later, set `ru.mdx` to `status: draft`, publish, and flip it in a later draft.
-5. **Discarding a draft.** Delete the `draft/<slug>` branch, then delete that draft's unpublished images from R2 (see [2.3](#23-media-cloudflare-r2)).
+4. **Editing published content.** Create `draft/<folder>/<slug>` from `main`, edit, and merge again. Every revision appears in git history.
+   - **Languages share the branch.** One `draft/<folder>/<slug>` covers every language of a piece. Publishing merges all of them, and each file's `status` decides which languages are visible. To ship English now and Russian later, set `ru.mdx` to `status: draft`, publish, and flip it in a later draft.
+5. **Discarding a draft.** Delete the `draft/<folder>/<slug>` branch, then delete that draft's unpublished images from R2 (see [2.3](#23-media-cloudflare-r2)).
 6. **Listing drafts.** One API call lists the branches matching `draft/*` (`GET /repos/{owner}/{repo}/branches`). No database index is needed.
 7. **History search.** `GET /repos/{owner}/{repo}/commits?path=<file>&sha=<branch>` lists a file's commits, and `GET /repos/{owner}/{repo}/commits/{sha}` returns each diff. Cache these responses, since every history view costs API calls.
 8. **Conflicts.** If `main` changed under a draft (for example you edited the file in VS Code), detect it when merging. Show the diff, or rebase the draft with the merges API.
@@ -277,7 +277,7 @@ content/<contentId>/<sha256-first-16-hex>.webp
 
 - **`contentId` is the stable `id` from the frontmatter,** not the slug, so renaming a slug never moves images. It also scopes every image to one piece, which makes per-piece deletion simple.
 - **Named by content hash.** Uploading the same image twice in one piece reuses the existing key, and a changed image always gets a new key.
-- **Never overwritten.** Serve with `Cache-Control: public, max-age=31536000, immutable`. Every commit in git history keeps rendering, because the images it references never change.
+- **Never overwritten.** Every commit in git history keeps rendering, because the images it references never change. That makes them safe to cache forever: add a Cloudflare cache rule on the image domain (`Cache-Control: public, max-age=31536000, immutable`). Uploads don't set it per object, because the bucket's CORS policy only allows the `content-type` header.
 - **MDX stores keys, not URLs.** A rehype plugin or the `<Img>` component adds `NEXT_PUBLIC_ASSETS_URL`, so changing domains needs no content edits.
 
 #### Upload flow
@@ -302,14 +302,14 @@ The rule is that **an image is deletable only while it has never reached `main`*
 
 | Event | What happens |
 |---|---|
-| Upload | Insert `asset` with `draft_branch = draft/<slug>` and `published_at = NULL`. |
+| Upload | Insert `asset` with `draft_branch = draft/<folder>/<slug>` and `published_at = NULL`. |
 | Publish (merge into `main`) | `UPDATE asset SET published_at = now() WHERE draft_branch = …`. The merge commit brings all of the draft's commits into `main`'s history, so every image they reference is now permanent. |
 | Discard draft | Delete the branch. Then `SELECT key FROM asset WHERE draft_branch = … AND published_at IS NULL`, delete those keys from R2 with `DeleteObjects` (up to 1,000 keys per request), and delete the rows. |
 | Discard a never-published piece | Same as above. All of its images are unpublished, so the whole `content/<id>/` prefix goes. |
 | Discard a re-edit of a published piece | Only the images added in that draft are deleted. Images already published stay. |
 | Hard-delete a published piece | Optional "purge" action: remove the files from `main` and delete every `content/<id>/` object and row. Old commits of that piece then show broken images, which is acceptable for a piece you deleted on purpose. |
 
-**Safety-net sweeper (weekly cron):** delete assets where `published_at IS NULL` and either
+**Safety-net sweeper (part of the daily job):** delete assets where `published_at IS NULL` and either
 
 - the `draft_branch` no longer exists (for example, a branch deleted in the GitHub UI), or
 - the image is no longer referenced by any commit on its draft branch (for example, pasted then removed before a Save).
@@ -413,7 +413,7 @@ Features in priority order:
    - **Translate mode:** the original language read-only on one side, the translation on the other.
    - **"Possibly outdated" flag** on a translation when the original changed after it, with a diff of the changes.
    - **Translation matrix** in the content list: one row per piece, one column per language (published / draft / missing / outdated).
-2. Local autosave to IndexedDB; **Save** (and idle commit) to `draft/<slug>`; **Publish** merges into `main`. See [2.2](#22-drafts-and-history-in-git).
+2. Local autosave to IndexedDB; **Save** (and idle commit) to `draft/<folder>/<slug>`; **Publish** merges into `main`. See [2.2](#22-drafts-and-history-in-git).
 3. A drafts list (the `draft/*` branches) and a history panel: commit list per file, diff view, restore an old version.
 4. Paste or drag-and-drop images: client-side resize, hash, presigned upload to R2. **Discard draft** deletes the branch and its unpublished images. See [2.3](#23-media-cloudflare-r2).
 5. A slash menu or snippets for your allowlisted MDX components.
@@ -431,7 +431,7 @@ Features in priority order:
 | **2. GitHub content and media** (~4–5 days) | Content repo, GitHub App, Neon `content` index, webhook sync (`main` only) and revalidation. R2 buckets, `img.<domain>` custom domain, `asset` table, `<Img>` component with key-to-URL resolution. | `git push` to `main` in the content repo shows up on the site within seconds, with images served from R2. |
 | **3. Auth** (~3 days) | Better Auth with GitHub and Google, user menu, admin allowlist, guarded `/admin`. | You're admin and others are readers. |
 | **4. Engagement** (~3–4 days) | Views with dedupe, ratings, stats on cards, "Top Picks" ranked by real data, Postgres search. | The numbers on the cards are real. |
-| **5. Editor v1** (~2 weeks) | CodeMirror editor, live preview, language tabs and translate mode, translation matrix and outdated flags, IndexedDB autosave, draft branches (Save / idle commit), Publish as a merge into `main`, drafts list, history and diff panel, image upload to R2, Discard draft with image cleanup, weekly orphan sweeper. | You can write, revisit history, publish and discard without opening VS Code, and discarded drafts leave nothing behind in R2. |
+| **5. Editor v1** (~2 weeks) | CodeMirror editor, live preview, language tabs and translate mode, translation matrix and outdated flags, IndexedDB autosave, draft branches (Save / idle commit), Publish as a merge into `main`, drafts list, history and diff panel, image upload to R2, Discard draft with image cleanup, orphan sweeper. | You can write, revisit history, publish and discard without opening VS Code, and discarded drafts leave nothing behind in R2. |
 | **6. Notes and polish** | Private notes, scheduled publishing, analytics dashboard in `/admin`, optional comments. | — |
 
 Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline are the core of the product. Building them against local files means Phase 2 only replaces where content comes from.
@@ -458,7 +458,7 @@ Phase 1 comes before the backend on purpose. Detail pages and the MDX pipeline a
 |---|---|
 | Framework | Next.js 16 (App Router, RSC, `"use cache"`) |
 | i18n | next-intl for UI strings (existing); content translations as `<locale>.mdx` files per piece, with per-language status and fallback |
-| Content | Private GitHub repo + GitHub App + webhook; drafts on `draft/<slug>` branches |
+| Content | Private GitHub repo + GitHub App + webhook; drafts on `draft/<folder>/<slug>` branches |
 | Editor autosave | IndexedDB (local crash recovery only) |
 | MDX | `next-mdx-remote-client`, remark-gfm, rehype-slug, rehype-pretty-code (Shiki) |
 | Validation | Zod |

@@ -282,6 +282,10 @@ These come from how this site stores and renders content.
 - `status: draft` keeps a translation hidden. Readers in that language see a
   published version, with a notice that their translation is coming soon.
 - Reading time is calculated from the body; don't write it by hand.
+- A translation may have `translatedFrom: <git blob sha>`: the version of the
+  original file it was last brought up to date with. The editor sets it ("Mark
+  as up to date") and flags the translation as outdated when the original
+  changes. You don't need to write it by hand.
 - Every file is validated when it's synced. An invalid piece is rejected with
   the file and field that are wrong (in the webhook response and in
   `npm run content:sync`), and its previous version stays live.

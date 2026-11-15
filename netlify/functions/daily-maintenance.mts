@@ -1,7 +1,7 @@
 /**
  * Netlify Scheduled Function: once a day (04:00 UTC), call the app's
- * /api/cron/daily route, which re-syncs content in case a webhook was missed
- * and prunes old view events. The route checks CRON_SECRET, so the secret must
+ * /api/cron/daily route, which re-syncs content in case a webhook was missed,
+ * prunes old view events and deletes orphaned draft images. The route checks CRON_SECRET, so the secret must
  * be set in the Netlify site's environment variables.
  *
  * Scheduled functions run only on published (production) deploys. To run it by

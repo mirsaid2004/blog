@@ -32,6 +32,15 @@ export const translationSchema = z.strictObject({
   summary: z.string().min(1),
   /** Each language is published independently; a draft shows as "coming soon". */
   status: z.enum(["draft", "published"]),
+  /**
+   * Git blob sha of the original-language file this translation is up to date
+   * with. When the original changes, its sha differs and the editor flags the
+   * translation as possibly outdated. Unset on the original itself.
+   */
+  translatedFrom: z
+    .string()
+    .regex(/^[0-9a-f]{40}$/, "expected a 40-character git sha")
+    .optional(),
 });
 
 export type PieceMeta = z.infer<typeof pieceMetaSchema>;
